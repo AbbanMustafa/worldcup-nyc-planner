@@ -14,12 +14,14 @@ const execFile = promisify(execFileCallback);
 const ROOT_DIR = process.cwd();
 const ARTIFACTS_DIR = path.join(ROOT_DIR, 'artifacts', 'qa');
 const SCREENSHOTS_DIR = path.join(tmpdir(), `worldcup-agent-qa-${Date.now()}`);
+const RECORDINGS_DIR = path.join(ARTIFACTS_DIR, 'recordings');
 const REPORT_PATH = path.join(ARTIFACTS_DIR, 'report.json');
 const SECTION_PATH = path.join(ARTIFACTS_DIR, 'section.md');
 const STATUS_PATH = path.join(ARTIFACTS_DIR, 'status.txt');
 const AGENT_DEVICE_BIN = 'agent-device';
 
 const QA_PLATFORM = process.env.QA_PLATFORM === 'ios' ? 'ios' : 'android';
+const RECORDING_PATH = path.join(RECORDINGS_DIR, `${QA_PLATFORM}-agent-qa.mp4`);
 const PLATFORM_LABEL = QA_PLATFORM === 'ios' ? 'iOS' : 'Android';
 const HAS_ANTHROPIC_KEY = Boolean(process.env.ANTHROPIC_API_KEY);
 const HAS_GATEWAY_KEY = Boolean(process.env.AI_GATEWAY_API_KEY);
@@ -41,12 +43,17 @@ const context = {
   prNumber: Number(pr?.number || 0),
   prTitle: pr?.title || '',
   provider: QA_PROVIDER,
-  screenshotDirectory: SCREENSHOTS_DIR
+  screenshotDirectory: SCREENSHOTS_DIR,
+  recordingsDirectory: RECORDINGS_DIR
 };
 
 const agentDeviceTrace = [];
 const qaChecks = [];
 const launchAttempts = [];
+const recordingState = {
+  started: false,
+  stopped: false
+};
 let reportWasWritten = false;
 
 await main();
@@ -54,6 +61,7 @@ await main();
 async function main() {
   await mkdir(ARTIFACTS_DIR, { recursive: true });
   await mkdir(SCREENSHOTS_DIR, { recursive: true });
+  await mkdir(RECORDINGS_DIR, { recursive: true });
 
   if (BOOTSTRAP_ERROR) {
     await writeReport({
@@ -82,6 +90,7 @@ async function main() {
 
   try {
     await prepareDeviceForQa();
+    await startScreenRecording();
     await runDeterministicSmoke();
 
     const result = await generateText({
@@ -194,6 +203,7 @@ function appContextTool() {
       platform: PLATFORM_LABEL,
       applicationId: context.applicationId,
       screenshotDirectory: SCREENSHOTS_DIR,
+      recordingsDirectory: RECORDINGS_DIR,
       selectors: [
         'id="worldcup-screen"',
         'id="search-input"',
@@ -260,6 +270,12 @@ function writeReportTool() {
           label: screenshot.label,
           blobUrl: screenshot.blobUrl,
           uploadError: screenshot.uploadError
+        })),
+        recordings: report.recordings.map((recording) => ({
+          fileName: recording.fileName,
+          label: recording.label,
+          relativePath: recording.relativePath,
+          bytes: recording.bytes
         }))
       };
     }
@@ -399,6 +415,49 @@ async function prepareDeviceForQa() {
   await runAgentDevice(['logs', 'mark', `Starting ${PLATFORM_LABEL} agent QA`], { allowFailure: true });
 }
 
+async function startScreenRecording() {
+  if (process.env.AGENT_QA_RECORD_SCREEN === '0') {
+    qaChecks.push({
+      name: 'Screen recording',
+      status: 'passed',
+      critical: false,
+      command: 'agent-device record start',
+      detail: 'Screen recording disabled by AGENT_QA_RECORD_SCREEN=0.'
+    });
+    return;
+  }
+
+  await mkdir(RECORDINGS_DIR, { recursive: true });
+  const result = await runAgentDevice(['record', 'start', RECORDING_PATH, '--quality', '6'], {
+    allowFailure: true
+  });
+  recordingState.started = result.ok;
+
+  qaChecks.push({
+    name: 'Screen recording started',
+    status: result.ok ? 'passed' : 'failed',
+    critical: false,
+    command: result.command,
+    detail: trim(result.ok ? result.stdout || RECORDING_PATH : result.stderr || result.stdout, 500)
+  });
+}
+
+async function stopScreenRecording() {
+  if (!recordingState.started || recordingState.stopped) {
+    return;
+  }
+
+  recordingState.stopped = true;
+  const result = await runAgentDevice(['record', 'stop'], { allowFailure: true });
+  qaChecks.push({
+    name: 'Screen recording stopped',
+    status: result.ok ? 'passed' : 'failed',
+    critical: false,
+    command: result.command,
+    detail: trim(result.ok ? result.stdout || 'Recording stopped.' : result.stderr || result.stdout, 500)
+  });
+}
+
 async function ensureAppOpen(reason) {
   if (!context.applicationId) {
     return false;
@@ -510,8 +569,10 @@ async function writeFallbackReport(modelText) {
 
 async function writeReport(input) {
   await mkdir(ARTIFACTS_DIR, { recursive: true });
+  await stopScreenRecording();
 
   const screenshots = await collectScreenshots(input.screenshotLabels || []);
+  const recordings = await collectRecordings();
   const criticalFailures = qaChecks.filter((check) => check.critical && check.status === 'failed');
   const checked = dedupe([...qaChecks.map(formatQaCheck), ...(input.checked || [])]);
   const issues = dedupe([...criticalFailures.map(formatQaCheck), ...(input.issues || [])]);
@@ -531,6 +592,7 @@ async function writeReport(input) {
     platformLabel: PLATFORM_LABEL,
     prNumber: context.prNumber,
     screenshots,
+    recordings,
     qaChecks,
     launchAttempts,
     agentDeviceTrace
@@ -588,6 +650,49 @@ async function collectScreenshots(screenshotLabels) {
   return screenshots;
 }
 
+async function collectRecordings() {
+  const recordingPaths = await collectFiles(RECORDINGS_DIR, /\.(mp4|mov|webm)$/i);
+  const recordings = [];
+
+  for (const absolutePath of recordingPaths.sort()) {
+    const fileStat = await stat(absolutePath);
+    const fileName = path.basename(absolutePath);
+    recordings.push({
+      fileName,
+      absolutePath,
+      relativePath: path.relative(ROOT_DIR, absolutePath),
+      bytes: fileStat.size,
+      label: humanizeArtifactLabel(fileName)
+    });
+  }
+
+  return recordings;
+}
+
+async function collectFiles(directory, matcher) {
+  let entries = [];
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const files = [];
+  for (const entry of entries) {
+    const absolutePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await collectFiles(absolutePath, matcher)));
+      continue;
+    }
+
+    if (entry.isFile() && matcher.test(entry.name)) {
+      files.push(absolutePath);
+    }
+  }
+
+  return files;
+}
+
 function renderSection(report) {
   const lines = [
     `### ${report.platformLabel}`,
@@ -607,6 +712,16 @@ function renderSection(report) {
     for (const screenshot of report.screenshots) {
       const target = screenshot.blobUrl || screenshot.absolutePath;
       lines.push(`- [${screenshot.label || screenshot.fileName}](${target})`);
+    }
+    lines.push('');
+  }
+
+  if (report.recordings.length > 0) {
+    lines.push('**Screen recordings**', '');
+    for (const recording of report.recordings) {
+      lines.push(
+        `- ${recording.label || recording.fileName}: \`${recording.relativePath}\` (${formatBytes(recording.bytes)})`
+      );
     }
     lines.push('');
   }
@@ -731,6 +846,10 @@ function sanitizePathPart(value) {
   return String(value).replace(/[^a-zA-Z0-9._-]/g, '-');
 }
 
+function humanizeArtifactLabel(fileName) {
+  return humanizeScreenshotLabel(fileName.replace(/-agent-qa/g, '-qa'));
+}
+
 function humanizeScreenshotLabel(fileName) {
   return fileName
     .replace(/\.[^.]+$/, '')
@@ -738,6 +857,22 @@ function humanizeScreenshotLabel(fileName) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`;
 }
 
 function parseJson(value, fallback) {
