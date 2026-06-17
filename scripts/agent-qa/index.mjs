@@ -164,6 +164,7 @@ function buildPrompt() {
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
+    '- Matchday Passports are visible and the Argentina passport opens an itinerary with a watch-party plan.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -176,6 +177,9 @@ function buildPrompt() {
     '- id="map-shell"',
     '- id="real-map"',
     '- id="spot-detail-card"',
+    '- id="matchday-passports"',
+    '- id="passport-card-argentina-passport"',
+    '- id="passport-detail-argentina-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -186,7 +190,9 @@ function buildPrompt() {
     `6. Capture a culture screenshot at ${path.join(SCREENSHOTS_DIR, '02-culture.png')}.`,
     '7. Fill id="search-input" with "Koreatown"; verify the Koreatown card and Korea Republic country chip.',
     `8. Capture a search screenshot at ${path.join(SCREENSHOTS_DIR, '03-search-koreatown.png')}.`,
-    '9. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '9. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
+    `10. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '04-argentina-passport.png')}.`,
+    '11. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -208,7 +214,10 @@ function appContextTool() {
         'id="filter-culture"',
         'id="map-shell"',
         'id="real-map"',
-        'id="spot-detail-card"'
+        'id="spot-detail-card"',
+        'id="matchday-passports"',
+        'id="passport-card-argentina-passport"',
+        'id="passport-detail-argentina-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -216,7 +225,10 @@ function appContextTool() {
         'NYC culture map',
         'Culture',
         'Koreatown Red Devils Stop',
-        'Korea Republic'
+        'Korea Republic',
+        'Matchday passports',
+        'Argentina Matchday Passport',
+        'Queens football bar near Roosevelt Av'
       ],
       deterministicChecks: qaChecks,
       launchAttempts
@@ -391,6 +403,35 @@ async function runDeterministicSmoke() {
     await runAgentDevice(['open', context.applicationId, '--relaunch'], { allowFailure: true });
     await runAgentDevice(['wait', '1000'], { allowFailure: true });
   }
+
+  await recordQaCheck({
+    name: 'Scrolled toward Matchday Passports',
+    args: ['scroll', 'down', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Scrolled to Matchday Passports',
+    args: ['scroll', 'down', '0.9'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Argentina passport card visible',
+    args: ['wait', 'text', 'Argentina Matchday Passport', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Argentina passport selectable',
+    args: ['press', 'id="passport-card-argentina-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Argentina passport watch party visible',
+    args: ['wait', 'text', 'Queens football bar near Roosevelt Av', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Argentina passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '04-argentina-passport.png')]
+  });
 }
 
 async function recordQaCheck({ name, args, critical = false }) {
@@ -555,7 +596,7 @@ async function writeFallbackReport(modelText) {
   const summary =
     criticalFailures.length > 0
       ? `Deterministic ${PLATFORM_LABEL} smoke QA found ${criticalFailures.length} critical failure(s). The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`
-      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, search, map mounting, the Culture filter, and Koreatown search. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
+      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, search, map mounting, the Culture filter, Koreatown search, and the Argentina Matchday Passport. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
 
   await writeReport({
     overallStatus: criticalFailures.length > 0 ? 'failed' : 'passed',
