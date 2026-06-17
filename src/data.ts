@@ -33,6 +33,31 @@ export type MatchPick = {
   color: string;
 };
 
+export type PassportStop = {
+  id: string;
+  time: string;
+  title: string;
+  detail: string;
+  spotId?: string;
+};
+
+export type MatchdayPassport = {
+  id: string;
+  country: string;
+  title: string;
+  fixture: string;
+  hero: string;
+  neighborhood: string;
+  anchorSpotId: string;
+  watchParty: string;
+  cultureStop: string;
+  foodPlan: string;
+  transitPlan: string;
+  budget: string;
+  color: string;
+  stops: PassportStop[];
+};
+
 export const spots: Spot[] = [
   {
     id: 'queens-hq',
@@ -261,6 +286,119 @@ export const spots: Spot[] = [
       'Use Fort Greene when your group wants pub energy, easier food choices, and a short ride from Barclays Center.',
     tips: ['Call for reservations', 'Check audio by fixture', 'Good fallback for capacity limits'],
     tags: ['Pubs', 'Fallback', 'Brooklyn']
+  }
+];
+
+export const matchdayPassports: MatchdayPassport[] = [
+  {
+    id: 'argentina-passport',
+    country: 'Argentina',
+    title: 'Argentina Matchday Passport',
+    fixture: 'Argentina group-stage night',
+    hero:
+      'Start with empanadas in Jackson Heights, catch the match with sky-blue flags, then keep the night moving on the 7.',
+    neighborhood: 'Jackson Heights, Queens',
+    anchorSpotId: 'jackson-heights',
+    watchParty: 'Queens football bar near Roosevelt Av',
+    cultureStop: 'Argentine bakery and Latin American street food loop',
+    foodPlan: 'Empanadas, steak sandwich, late helado stop',
+    transitPlan: '7/E/F/M/R to Jackson Hts-Roosevelt Av',
+    budget: '$25-$55 before drinks',
+    color: '#75AADB',
+    stops: [
+      {
+        id: 'fuel',
+        time: '3:30 PM',
+        title: 'Fuel up',
+        detail: 'Start with an Argentine bakery, then add Colombian or Ecuadorian bites around 37th Ave.',
+        spotId: 'jackson-heights'
+      },
+      {
+        id: 'watch',
+        time: '5:00 PM',
+        title: 'Watch party',
+        detail: 'Walk to a Queens football bar showing Argentina with match audio and a flag-heavy crowd.',
+        spotId: 'jackson-heights'
+      },
+      {
+        id: 'after',
+        time: 'Post-match',
+        title: 'Flags and dessert',
+        detail: 'Stay local for sidewalk celebrations, helado, and a quick 7 train exit.'
+      }
+    ]
+  },
+  {
+    id: 'korea-passport',
+    country: 'Korea Republic',
+    title: 'Korea Republic Night Plan',
+    fixture: 'Korea Republic match day',
+    hero: 'Make dinner the anchor, reserve early, and use Koreatown as the tightest late-night plan.',
+    neighborhood: 'Koreatown, Manhattan',
+    anchorSpotId: 'koreatown',
+    watchParty: 'Koreatown room with match audio',
+    cultureStop: 'Korean barbecue, bakeries, and late-night karaoke blocks',
+    foodPlan: 'BBQ table, fried chicken, shaved ice',
+    transitPlan: 'B/D/F/M/N/Q/R/W to Herald Sq',
+    budget: '$35-$80 depending on group size',
+    color: '#DC2626',
+    stops: [
+      {
+        id: 'meet',
+        time: '6:00 PM',
+        title: 'Meet at Herald Square',
+        detail: 'Keep the meetup simple, then walk into the dining blocks together.',
+        spotId: 'koreatown'
+      },
+      {
+        id: 'dinner',
+        time: '6:30 PM',
+        title: 'Dinner-first table',
+        detail: 'Reserve a room or table before kickoff so your group has seats and sound.'
+      },
+      {
+        id: 'late',
+        time: 'After final whistle',
+        title: 'Late-night second stop',
+        detail: 'Use bakeries, dessert, or karaoke as the post-match fallback.'
+      }
+    ]
+  },
+  {
+    id: 'senegal-passport',
+    country: 'Senegal',
+    title: 'Senegal Harlem Walk',
+    fixture: 'Senegal evening fixture',
+    hero: 'Build the plan around Harlem food, markets, and a nearby screen before the match starts.',
+    neighborhood: 'Little Senegal, Harlem',
+    anchorSpotId: 'little-senegal',
+    watchParty: 'Harlem screen near the restaurant crawl',
+    cultureStop: 'Senegalese restaurants and markets around 116th and 125th',
+    foodPlan: 'Thieboudienne, grilled fish, ginger drink',
+    transitPlan: '2/3 to 116 St or A/B/C/D to 125 St',
+    budget: '$20-$45 pay as you go',
+    color: '#16A34A',
+    stops: [
+      {
+        id: 'crawl',
+        time: '4:00 PM',
+        title: 'Food crawl',
+        detail: 'Start with Senegalese restaurants and markets before the crowd builds.',
+        spotId: 'little-senegal'
+      },
+      {
+        id: 'audio',
+        time: '6:30 PM',
+        title: 'Find match audio',
+        detail: 'Ask venues about sound before committing the group to a screen.'
+      },
+      {
+        id: 'walk',
+        time: 'After match',
+        title: 'Harlem walkout',
+        detail: 'Keep the post-match route close to 125th for trains and backup food.'
+      }
+    ]
   }
 ];
 

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 import RealMap from './src/components/RealMap';
-import { FilterId, Spot, filters, matchPicks, spots } from './src/data';
+import { FilterId, MatchdayPassport, Spot, filters, matchPicks, matchdayPassports, spots } from './src/data';
 
 const airbnbRed = '#FF385C';
 const ink = '#1F1F1F';
@@ -111,6 +111,7 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(spots[0].id);
+  const [selectedPassportId, setSelectedPassportId] = useState(matchdayPassports[0].id);
 
   const filteredSpots = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -132,6 +133,8 @@ export default function App() {
   }, [activeFilter, query]);
 
   const selectedSpot = filteredSpots.find((spot) => spot.id === selectedId) ?? filteredSpots[0] ?? spots[0];
+  const selectedPassport =
+    matchdayPassports.find((passport) => passport.id === selectedPassportId) ?? matchdayPassports[0];
 
   const handleFilterChange = (filterId: FilterId) => {
     setActiveFilter(filterId);
@@ -139,6 +142,12 @@ export default function App() {
     if (nextSpot) {
       setSelectedId(nextSpot.id);
     }
+  };
+
+  const handlePassportSelect = (passport: MatchdayPassport) => {
+    setSelectedPassportId(passport.id);
+    setActiveFilter('all');
+    setSelectedId(passport.anchorSpotId);
   };
 
   const compact = width < 760;
@@ -152,7 +161,7 @@ export default function App() {
             <AppIcon name="ball" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.headerCopy}>
-            <Text style={styles.kicker}>NYC match-day planner</Text>
+            <Text style={styles.kicker}>Simulator QA demo</Text>
             <Text style={styles.title}>World Cup stays local.</Text>
           </View>
           <Pressable style={styles.iconButton} accessibilityLabel="Open saved plans">
@@ -212,6 +221,28 @@ export default function App() {
           />
           <SpotDetailCard spot={selectedSpot} compact={compact} />
         </View>
+
+        <SectionHeader
+          icon="ticket"
+          title="Matchday passports"
+          actionLabel={`${matchdayPassports.length} ready`}
+        />
+        <FlatList
+          testID="matchday-passports"
+          data={matchdayPassports}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.passportList}
+          renderItem={({ item }) => (
+            <PassportCard
+              passport={item}
+              selected={selectedPassport.id === item.id}
+              onPress={() => handlePassportSelect(item)}
+            />
+          )}
+        />
+        <PassportDetailPanel passport={selectedPassport} />
 
         <SectionHeader icon="calendar" title="Best upcoming pairings" actionLabel={`${matchPicks.length} picks`} />
         <FlatList
@@ -368,6 +399,111 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+function PassportCard({
+  passport,
+  selected,
+  onPress
+}: {
+  passport: MatchdayPassport;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      testID={`passport-card-${passport.id}`}
+      accessibilityRole="button"
+      accessibilityLabel={`${passport.title}, ${passport.neighborhood}`}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[styles.passportCard, selected && styles.passportCardSelected]}
+    >
+      <View style={styles.passportTopRow}>
+        <View style={[styles.passportFlagWrap, { backgroundColor: passport.color }]}>
+          <Text style={styles.passportFlag}>{countryFlags[passport.country] ?? '🏳️'}</Text>
+        </View>
+        <View style={styles.passportBadge}>
+          <AppIcon name="ticket" size={13} color={airbnbRed} />
+          <Text style={styles.passportBadgeText}>Passport</Text>
+        </View>
+      </View>
+      <Text style={styles.passportCountry}>{formatCountry(passport.country)}</Text>
+      <Text style={styles.passportTitle}>{passport.title}</Text>
+      <Text style={styles.passportFixture}>{passport.fixture}</Text>
+      <Text style={styles.passportHero} numberOfLines={3}>
+        {passport.hero}
+      </Text>
+      <View style={styles.passportFooter}>
+        <AppIcon name="map" size={15} color={selected ? airbnbRed : muted} />
+        <Text style={[styles.passportNeighborhood, selected && styles.passportNeighborhoodSelected]}>
+          {passport.neighborhood}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function PassportDetailPanel({ passport }: { passport: MatchdayPassport }) {
+  return (
+    <View
+      testID={`passport-detail-${passport.id}`}
+      accessibilityLabel={`${passport.title} itinerary`}
+      style={styles.passportPanel}
+    >
+      <View style={styles.passportPanelHeader}>
+        <View style={[styles.passportPanelMark, { backgroundColor: passport.color }]}>
+          <Text style={styles.passportPanelFlag}>{countryFlags[passport.country] ?? '🏳️'}</Text>
+        </View>
+        <View style={styles.passportPanelCopy}>
+          <Text style={styles.passportPanelEyebrow}>Selected passport</Text>
+          <Text style={styles.passportPanelTitle}>{passport.title}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.passportPanelSummary}>{passport.hero}</Text>
+
+      <View style={styles.passportPlanGrid}>
+        <PassportFact label="Watch" value={passport.watchParty} />
+        <PassportFact label="Eat" value={passport.foodPlan} />
+        <PassportFact label="Explore" value={passport.cultureStop} />
+        <PassportFact label="Transit" value={passport.transitPlan} />
+      </View>
+
+      <View style={styles.passportBudgetRow}>
+        <AppIcon name="ticket" size={16} color={airbnbRed} />
+        <Text style={styles.passportBudgetText}>{passport.budget}</Text>
+      </View>
+
+      <View style={styles.passportTimeline}>
+        {passport.stops.map((stop) => (
+          <View
+            key={stop.id}
+            testID={`passport-stop-${passport.id}-${stop.id}`}
+            style={styles.passportStop}
+          >
+            <View style={styles.passportStopRail}>
+              <View style={[styles.passportStopDot, { backgroundColor: passport.color }]} />
+            </View>
+            <View style={styles.passportStopContent}>
+              <Text style={styles.passportStopTime}>{stop.time}</Text>
+              <Text style={styles.passportStopTitle}>{stop.title}</Text>
+              <Text style={styles.passportStopDetail}>{stop.detail}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function PassportFact({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.passportFact}>
+      <Text style={styles.passportFactLabel}>{label}</Text>
+      <Text style={styles.passportFactValue}>{value}</Text>
     </View>
   );
 }
@@ -742,6 +878,225 @@ const styles = StyleSheet.create({
     color: airbnbRed,
     fontSize: 13,
     fontWeight: '900'
+  },
+  passportList: {
+    gap: 12,
+    paddingRight: 18
+  },
+  passportCard: {
+    width: 282,
+    minHeight: 238,
+    borderRadius: 22,
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ECE7E2'
+  },
+  passportCardSelected: {
+    borderColor: airbnbRed,
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2
+  },
+  passportTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10
+  },
+  passportFlagWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  passportFlag: {
+    fontSize: 25,
+    lineHeight: 30
+  },
+  passportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    height: 29,
+    borderRadius: 15,
+    backgroundColor: '#FFF0F3'
+  },
+  passportBadgeText: {
+    color: airbnbRed,
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase'
+  },
+  passportCountry: {
+    color: muted,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase'
+  },
+  passportTitle: {
+    color: ink,
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900'
+  },
+  passportFixture: {
+    color: airbnbRed,
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  passportHero: {
+    color: '#4E4E4E',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600'
+  },
+  passportFooter: {
+    marginTop: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  passportNeighborhood: {
+    flex: 1,
+    color: muted,
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  passportNeighborhoodSelected: {
+    color: airbnbRed
+  },
+  passportPanel: {
+    borderRadius: 24,
+    padding: 16,
+    gap: 13,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ECE7E2'
+  },
+  passportPanelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  passportPanelMark: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  passportPanelFlag: {
+    fontSize: 29,
+    lineHeight: 34
+  },
+  passportPanelCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  passportPanelEyebrow: {
+    color: muted,
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase'
+  },
+  passportPanelTitle: {
+    color: ink,
+    fontSize: 22,
+    lineHeight: 26,
+    fontWeight: '900'
+  },
+  passportPanelSummary: {
+    color: '#4E4E4E',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700'
+  },
+  passportPlanGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10
+  },
+  passportFact: {
+    width: '47%',
+    minHeight: 82,
+    borderRadius: 16,
+    padding: 12,
+    gap: 5,
+    backgroundColor: '#F7F7F7'
+  },
+  passportFactLabel: {
+    color: muted,
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase'
+  },
+  passportFactValue: {
+    color: ink,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800'
+  },
+  passportBudgetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 12,
+    minHeight: 38,
+    borderRadius: 14,
+    backgroundColor: '#FFF0F3'
+  },
+  passportBudgetText: {
+    color: '#B4233E',
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: '900'
+  },
+  passportTimeline: {
+    gap: 12
+  },
+  passportStop: {
+    flexDirection: 'row',
+    gap: 11
+  },
+  passportStopRail: {
+    width: 18,
+    alignItems: 'center',
+    paddingTop: 3
+  },
+  passportStopDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF'
+  },
+  passportStopContent: {
+    flex: 1,
+    minWidth: 0,
+    paddingBottom: 2
+  },
+  passportStopTime: {
+    color: muted,
+    fontSize: 11,
+    fontWeight: '900'
+  },
+  passportStopTitle: {
+    color: ink,
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: '900'
+  },
+  passportStopDetail: {
+    color: '#5F5F5F',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600'
   },
   matchList: {
     gap: 12,
