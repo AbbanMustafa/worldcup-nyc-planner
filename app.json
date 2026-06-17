@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "World Cup NYC",
+    "slug": "worldcup-nyc-planner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "worldcupnyc",
+    "splash": {
+      "backgroundColor": "#FFF8F3"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF8F3"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}
