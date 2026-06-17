@@ -365,6 +365,49 @@ export const matchdayPassports: MatchdayPassport[] = [
     ]
   },
   {
+    id: 'japan-passport',
+    country: 'Japan',
+    title: 'Japan Matchday Passport',
+    fixture: 'Japan supporter night',
+    hero: 'Anchor the night in Koreatown with izakaya energy, ramen, and a late dessert route before kickoff.',
+    neighborhood: 'Koreatown, Manhattan',
+    anchorSpotId: 'koreatown',
+    watchParty: 'Koreatown izakaya or soccer bar with Japan supporters',
+    cultureStop: 'Japanese restaurants, bakeries, and late-night dessert around Herald Square',
+    foodPlan: 'Ramen, yakitori, konbini-style snacks, late dessert',
+    transitPlan: 'B/D/F/M/N/Q/R/W to Herald Sq',
+    budget: '$30-$75 depending on table size',
+    color: '#BC002D',
+    stops: [
+      {
+        id: 'meet',
+        time: '5:30 PM',
+        title: 'Meet near Herald Square',
+        detail: 'Keep the group close to the B/D/F/M/N/Q/R/W hub before walking into Koreatown.',
+        spotId: 'koreatown'
+      },
+      {
+        id: 'eat',
+        time: '6:00 PM',
+        title: 'Izakaya or ramen base',
+        detail: 'Start with ramen, yakitori, or shareable izakaya plates before kickoff.',
+        spotId: 'koreatown'
+      },
+      {
+        id: 'watch',
+        time: 'Kickoff',
+        title: 'Japan supporter screen',
+        detail: 'Choose a soccer bar or private room with Japan supporters, match audio, and room for flags.'
+      },
+      {
+        id: 'late',
+        time: 'Post-match',
+        title: 'Late dessert',
+        detail: 'Keep the plan flexible with shaved ice, bakeries, or konbini-style snacks nearby.'
+      }
+    ]
+  },
+  {
     id: 'senegal-passport',
     country: 'Senegal',
     title: 'Senegal Harlem Walk',
