@@ -46,6 +46,7 @@ const context = {
 
 const agentDeviceTrace = [];
 const qaChecks = [];
+const launchAttempts = [];
 let reportWasWritten = false;
 
 await main();
@@ -80,6 +81,7 @@ async function main() {
   }
 
   try {
+    await prepareDeviceForQa();
     await runDeterministicSmoke();
 
     const result = await generateText({
@@ -207,7 +209,8 @@ function appContextTool() {
         'Koreatown Red Devils Stop',
         'Korea Republic'
       ],
-      deterministicChecks: qaChecks
+      deterministicChecks: qaChecks,
+      launchAttempts
     })
   });
 }
@@ -305,13 +308,20 @@ async function runAgentDevice(args, options = {}) {
 }
 
 async function runDeterministicSmoke() {
+  const launched = await ensureAppOpen('Initial app launch');
   await runAgentDevice(['react-native', 'dismiss-overlay'], { allowFailure: true });
 
-  await recordQaCheck({
+  const homeCheck = await recordQaCheck({
     name: 'Home title visible',
-    args: ['wait', 'text', 'World Cup stays local.', '15000'],
+    args: ['wait', 'text', 'World Cup stays local.', '8000'],
     critical: true
   });
+
+  if (!launched || homeCheck.status === 'failed') {
+    await collectDebugEvidence('Home screen did not appear; skipping deeper UI checks.');
+    return;
+  }
+
   await recordQaCheck({
     name: 'Search input visible',
     args: ['is', 'visible', 'id="search-input"'],
@@ -333,7 +343,7 @@ async function runDeterministicSmoke() {
   });
   await recordQaCheck({
     name: 'Culture result visible',
-    args: ['wait', 'text', 'Little Senegal Walk', '5000'],
+    args: ['wait', 'text', 'Little Senegal Walk', '3000'],
     critical: true
   });
   await recordQaCheck({
@@ -347,7 +357,7 @@ async function runDeterministicSmoke() {
   });
   await recordQaCheck({
     name: 'Koreatown result visible',
-    args: ['wait', 'text', 'Koreatown Red Devils Stop', '5000'],
+    args: ['wait', 'text', 'Koreatown Red Devils Stop', '3000'],
     critical: true
   });
   await recordQaCheck({
@@ -363,15 +373,91 @@ async function runDeterministicSmoke() {
 }
 
 async function recordQaCheck({ name, args, critical = false }) {
-  const result = await runAgentDevice(args, { allowFailure: true });
-  qaChecks.push({
+  let result = await runAgentDevice(args, { allowFailure: true });
+  let retried = false;
+
+  if (critical && !result.ok && shouldRetryAfterOpen(result)) {
+    await ensureAppOpen(`Retry before ${name}`);
+    result = await runAgentDevice(args, { allowFailure: true });
+    retried = true;
+  }
+
+  const check = {
     name,
     status: result.ok ? 'passed' : 'failed',
     critical,
     command: result.command,
-    detail: trim(result.ok ? result.stdout || 'Command completed.' : result.stderr || result.stdout, 300)
+    detail: trim(result.ok ? result.stdout || 'Command completed.' : result.stderr || result.stdout, 300),
+    ...(retried ? { retried: true } : {})
+  };
+  qaChecks.push(check);
+  return check;
+}
+
+async function prepareDeviceForQa() {
+  await runAgentDevice(['logs', 'clear', '--restart'], { allowFailure: true });
+  await runAgentDevice(['logs', 'mark', `Starting ${PLATFORM_LABEL} agent QA`], { allowFailure: true });
+}
+
+async function ensureAppOpen(reason) {
+  if (!context.applicationId) {
+    return false;
+  }
+
+  const openResult = await runAgentDevice(['open', context.applicationId, '--relaunch'], { allowFailure: true });
+  await runAgentDevice(['wait', '2500'], { allowFailure: true });
+  const appState = await runAgentDevice(['appstate'], { allowFailure: true });
+  const screenshotFile = `${String(launchAttempts.length).padStart(2, '0')}-after-open.png`;
+  await runAgentDevice(['screenshot', path.join(SCREENSHOTS_DIR, screenshotFile)], { allowFailure: true });
+
+  const appStateText = `${appState.stdout || ''}\n${appState.stderr || ''}`;
+  const foregrounded =
+    openResult.ok &&
+    (appStateText.includes(context.applicationId) ||
+      appStateText.toLowerCase().includes('worldcup') ||
+      appStateText.toLowerCase().includes('world cup'));
+
+  const attempt = {
+    reason,
+    status: foregrounded ? 'passed' : 'failed',
+    command: openResult.command,
+    appStateCommand: appState.command,
+    detail: trim(appStateText || openResult.stderr || openResult.stdout, 500),
+    screenshotFile
+  };
+  launchAttempts.push(attempt);
+  qaChecks.push({
+    name: `${reason} foreground state`,
+    status: attempt.status,
+    critical: true,
+    command: appState.command,
+    detail: attempt.detail
   });
-  return result;
+
+  return foregrounded;
+}
+
+async function collectDebugEvidence(reason) {
+  qaChecks.push({
+    name: 'Debug evidence collection',
+    status: 'passed',
+    critical: false,
+    command: 'agent-device appstate; agent-device logs path; agent-device logs doctor',
+    detail: reason
+  });
+  await runAgentDevice(['appstate'], { allowFailure: true });
+  await runAgentDevice(['logs', 'path'], { allowFailure: true });
+  await runAgentDevice(['logs', 'doctor'], { allowFailure: true });
+}
+
+function shouldRetryAfterOpen(result) {
+  const text = `${result.stderr || ''}\n${result.stdout || ''}`.toLowerCase();
+  return (
+    text.includes('session_not_found') ||
+    text.includes('no active session') ||
+    text.includes('wait timed out') ||
+    text.includes('current surface')
+  );
 }
 
 async function writeFallbackReport(modelText) {
@@ -420,6 +506,7 @@ async function writeReport(input) {
     prNumber: context.prNumber,
     screenshots,
     qaChecks,
+    launchAttempts,
     agentDeviceTrace
   };
 
