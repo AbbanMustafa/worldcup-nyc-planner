@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.85",
     "@expo/vector-icons": "^15.0.3",
     "@vercel/blob": "^2.4.0",
     "ai": "^6.0.207",

@@ -4,6 +4,7 @@ import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { anthropic } from '@ai-sdk/anthropic';
 import { put } from '@vercel/blob';
 import { generateText, gateway, hasToolCall, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
@@ -20,7 +21,11 @@ const AGENT_DEVICE_BIN = 'agent-device';
 
 const QA_PLATFORM = process.env.QA_PLATFORM === 'ios' ? 'ios' : 'android';
 const PLATFORM_LABEL = QA_PLATFORM === 'ios' ? 'iOS' : 'Android';
-const MODEL_ID = process.env.QA_MODEL || 'openai/gpt-5.4-mini';
+const HAS_ANTHROPIC_KEY = Boolean(process.env.ANTHROPIC_API_KEY);
+const HAS_GATEWAY_KEY = Boolean(process.env.AI_GATEWAY_API_KEY);
+const QA_PROVIDER = process.env.QA_PROVIDER || 'anthropic';
+const MODEL_ID =
+  process.env.QA_MODEL || (QA_PROVIDER === 'anthropic' ? 'claude-haiku-4-5' : 'openai/gpt-5.4-mini');
 const BOOTSTRAP_ERROR = process.env.AGENT_QA_BOOTSTRAP_ERROR;
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const pr = parseJson(process.env.PR_JSON, {});
@@ -35,6 +40,7 @@ const context = {
   workflowUrl: process.env.WORKFLOW_URL || '',
   prNumber: Number(pr?.number || 0),
   prTitle: pr?.title || '',
+  provider: QA_PROVIDER,
   screenshotDirectory: SCREENSHOTS_DIR
 };
 
@@ -58,20 +64,23 @@ async function main() {
     return;
   }
 
-  if (!process.env.AI_GATEWAY_API_KEY) {
+  const authIssue = getAuthIssue();
+  if (authIssue) {
     await writeReport({
       overallStatus: 'blocked',
-      summary: 'AI QA did not run because AI_GATEWAY_API_KEY is not configured in the EAS environment.',
+      summary: 'AI QA did not run because the configured model provider is missing credentials.',
       checked: ['Workflow scripts and build bootstrap reached the QA agent.'],
-      issues: ['Missing AI_GATEWAY_API_KEY.'],
-      nextSteps: ['Add AI_GATEWAY_API_KEY to the preview EAS environment and rerun the workflow.']
+      issues: [authIssue],
+      nextSteps: [
+        'Add ANTHROPIC_API_KEY to the preview EAS environment, or set QA_PROVIDER=gateway and add AI_GATEWAY_API_KEY.'
+      ]
     });
     return;
   }
 
   try {
     const result = await generateText({
-      model: gateway(MODEL_ID),
+      model: createModel(),
       temperature: 0.2,
       stopWhen: [hasToolCall('write_report'), stepCountIs(14)],
       tools: {
@@ -109,6 +118,26 @@ async function main() {
     console.error(error);
     process.exitCode = 1;
   }
+}
+
+function getAuthIssue() {
+  if (QA_PROVIDER === 'anthropic') {
+    return HAS_ANTHROPIC_KEY ? null : 'Missing ANTHROPIC_API_KEY for QA_PROVIDER=anthropic.';
+  }
+
+  if (QA_PROVIDER === 'gateway') {
+    return HAS_GATEWAY_KEY ? null : 'Missing AI_GATEWAY_API_KEY for QA_PROVIDER=gateway.';
+  }
+
+  return `Unsupported QA_PROVIDER "${QA_PROVIDER}". Use "anthropic" or "gateway".`;
+}
+
+function createModel() {
+  if (QA_PROVIDER === 'anthropic') {
+    return anthropic(MODEL_ID.replace(/^anthropic\//, ''));
+  }
+
+  return gateway(MODEL_ID);
 }
 
 function buildPrompt() {
@@ -279,6 +308,7 @@ async function writeReport(input) {
     ...input,
     generatedAt: new Date().toISOString(),
     model: MODEL_ID,
+    provider: QA_PROVIDER,
     buildId: context.buildId,
     workflowUrl: context.workflowUrl,
     platform: QA_PLATFORM,
