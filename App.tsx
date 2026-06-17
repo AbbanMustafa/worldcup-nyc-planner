@@ -22,6 +22,50 @@ const ink = '#1F1F1F';
 const muted = '#717171';
 const sand = '#FFF8F3';
 
+const countryFlags: Record<string, string> = {
+  Algeria: '🇩🇿',
+  Argentina: '🇦🇷',
+  Australia: '🇦🇺',
+  Brazil: '🇧🇷',
+  Colombia: '🇨🇴',
+  Croatia: '🇭🇷',
+  Czechia: '🇨🇿',
+  Ecuador: '🇪🇨',
+  Egypt: '🇪🇬',
+  England: '🏴',
+  France: '🇫🇷',
+  Germany: '🇩🇪',
+  Ghana: '🇬🇭',
+  Iraq: '🇮🇶',
+  Japan: '🇯🇵',
+  'Korea Republic': '🇰🇷',
+  Mexico: '🇲🇽',
+  Morocco: '🇲🇦',
+  Norway: '🇳🇴',
+  Panama: '🇵🇦',
+  Paraguay: '🇵🇾',
+  Senegal: '🇸🇳',
+  'South Africa': '🇿🇦',
+  Spain: '🇪🇸',
+  Tunisia: '🇹🇳',
+  Uruguay: '🇺🇾',
+  USA: '🇺🇸',
+  'All teams': '🌎',
+  'Finalists TBD': '🏆'
+};
+
+function formatCountry(country: string) {
+  return `${countryFlags[country] ?? '🏳️'} ${country}`;
+}
+
+function formatFixture(fixture: string) {
+  if (fixture === 'World Cup Final') {
+    return '🏆 World Cup Final';
+  }
+
+  return fixture.split(' vs ').map(formatCountry).join(' vs ');
+}
+
 export default function App() {
   const { width } = useWindowDimensions();
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
@@ -147,7 +191,7 @@ export default function App() {
             >
               <View style={[styles.matchColor, { backgroundColor: item.color }]} />
               <Text style={styles.matchDate}>{item.date} - {item.time}</Text>
-              <Text style={styles.matchFixture}>{item.fixture}</Text>
+              <Text style={styles.matchFixture}>{formatFixture(item.fixture)}</Text>
               <Text style={styles.matchMeta}>{item.venue}</Text>
               <View style={styles.matchFooter}>
                 <Ionicons name="map-outline" size={16} color={airbnbRed} />
@@ -175,7 +219,7 @@ export default function App() {
                 <Text style={styles.routeName}>{spot.name}</Text>
                 <Text style={styles.routeMeta}>{spot.neighborhood} - {spot.borough}</Text>
                 <Text style={styles.routeCountries} numberOfLines={2}>
-                  {spot.countries.join(', ')}
+                  {spot.countries.map(formatCountry).join(', ')}
                 </Text>
               </Pressable>
             ))}
@@ -256,7 +300,7 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
       <View style={styles.chipRow}>
         {spot.countries.map((country) => (
           <View key={country} style={styles.countryChip}>
-            <View style={[styles.countryDot, { backgroundColor: spot.accent }]} />
+            <Text style={styles.countryFlag}>{countryFlags[country] ?? '🏳️'}</Text>
             <Text style={styles.countryText}>{country}</Text>
           </View>
         ))}
@@ -587,10 +631,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#F7F7F7'
   },
-  countryDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4
+  countryFlag: {
+    fontSize: 14,
+    lineHeight: 17
   },
   countryText: {
     color: ink,
