@@ -16,7 +16,9 @@ SYSTEM_IMAGE="${ANDROID_SYSTEM_IMAGE:-system-images;android-35;google_apis;x86_6
 AVD_NAME="${AGENT_DEVICE_ANDROID_DEVICE:?AGENT_DEVICE_ANDROID_DEVICE is required}"
 AVD_DEVICE="${ANDROID_AVD_DEVICE:-pixel_6}"
 
+set +o pipefail
 yes | "${SDKMANAGER}" --licenses >/dev/null
+set -o pipefail
 "${SDKMANAGER}" "platform-tools" "emulator" "${SYSTEM_IMAGE}"
 
 if ! "${AVDMANAGER}" list avd | grep -q "Name: ${AVD_NAME}"; then
