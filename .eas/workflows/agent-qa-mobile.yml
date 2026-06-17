@@ -111,9 +111,6 @@ jobs:
       AGENT_DEVICE_ANDROID_DEVICE: ci-android
       AGENT_QA_RECORD_SCREEN: "0"
       QA_ARTIFACT_BRANCH: qa-artifacts
-      QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
-      QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
-      QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
@@ -171,9 +168,6 @@ jobs:
       AGENT_DEVICE_IOS_BOOT_TIMEOUT_MS: "180000"
       AGENT_QA_RECORD_SCREEN: "0"
       QA_ARTIFACT_BRANCH: qa-artifacts
-      QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
-      QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
-      QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
