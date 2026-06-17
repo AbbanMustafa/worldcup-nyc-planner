@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import {
@@ -54,6 +53,27 @@ const countryFlags: Record<string, string> = {
   'Finalists TBD': '🏆'
 };
 
+const iconGlyphs = {
+  ball: '⚽',
+  heart: '♡',
+  search: '⌕',
+  close: '×',
+  options: '≡',
+  map: '⌖',
+  info: 'i',
+  walk: '↟',
+  trophy: '🏆',
+  tv: '▣',
+  star: '★',
+  time: '◷',
+  people: '◎',
+  ticket: '#',
+  train: 'T',
+  calendar: '▦'
+} as const;
+
+type AppIconName = keyof typeof iconGlyphs;
+
 function formatCountry(country: string) {
   return `${countryFlags[country] ?? '🏳️'} ${country}`;
 }
@@ -64,6 +84,26 @@ function formatFixture(fixture: string) {
   }
 
   return fixture.split(' vs ').map(formatCountry).join(' vs ');
+}
+
+function AppIcon({ name, size, color }: { name: AppIconName; size: number; color: string }) {
+  return (
+    <Text
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+      style={[
+        styles.appIcon,
+        {
+          color,
+          fontSize: size,
+          lineHeight: size + 2,
+          minWidth: size + 2
+        }
+      ]}
+    >
+      {iconGlyphs[name]}
+    </Text>
+  );
 }
 
 export default function App() {
@@ -109,19 +149,19 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.logoMark}>
-            <Ionicons name="football-outline" size={22} color="#FFFFFF" />
+            <AppIcon name="ball" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.headerCopy}>
             <Text style={styles.kicker}>NYC match-day planner</Text>
             <Text style={styles.title}>World Cup stays local.</Text>
           </View>
           <Pressable style={styles.iconButton} accessibilityLabel="Open saved plans">
-            <Ionicons name="heart-outline" size={21} color={ink} />
+            <AppIcon name="heart" size={21} color={ink} />
           </Pressable>
         </View>
 
         <View style={styles.searchWrap}>
-          <Ionicons name="search" size={20} color={muted} />
+          <AppIcon name="search" size={20} color={muted} />
           <TextInput
             testID="search-input"
             accessibilityLabel="Search teams, boroughs, vibes"
@@ -134,10 +174,10 @@ export default function App() {
           />
           {query ? (
             <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Clear search">
-              <Ionicons name="close" size={18} color={muted} />
+              <AppIcon name="close" size={18} color={muted} />
             </Pressable>
           ) : (
-            <Ionicons name="options-outline" size={19} color={muted} />
+            <AppIcon name="options" size={19} color={muted} />
           )}
         </View>
 
@@ -173,11 +213,7 @@ export default function App() {
           <SpotDetailCard spot={selectedSpot} compact={compact} />
         </View>
 
-        <SectionHeader
-          icon="calendar-outline"
-          title="Best upcoming pairings"
-          actionLabel={`${matchPicks.length} picks`}
-        />
+        <SectionHeader icon="calendar" title="Best upcoming pairings" actionLabel={`${matchPicks.length} picks`} />
         <FlatList
           data={matchPicks}
           keyExtractor={(item) => item.id}
@@ -202,7 +238,7 @@ export default function App() {
               <Text style={styles.matchFixture}>{formatFixture(item.fixture)}</Text>
               <Text style={styles.matchMeta}>{item.venue}</Text>
               <View style={styles.matchFooter}>
-                <Ionicons name="map-outline" size={16} color={airbnbRed} />
+                <AppIcon name="map" size={16} color={airbnbRed} />
                 <Text style={styles.matchNeighborhood}>{item.neighborhoodMatch}</Text>
               </View>
               <Text style={styles.matchReason}>{item.reason}</Text>
@@ -210,7 +246,7 @@ export default function App() {
           )}
         />
 
-        <SectionHeader icon="walk-outline" title="Culture-first routes" actionLabel="No ticket needed" />
+        <SectionHeader icon="walk" title="Culture-first routes" actionLabel="No ticket needed" />
         <View style={styles.routeGrid}>
           {spots
             .filter((spot) => spot.kind === 'culture')
@@ -237,7 +273,7 @@ export default function App() {
         </View>
 
         <View style={styles.noteBox}>
-          <Ionicons name="information-circle-outline" size={20} color={airbnbRed} />
+          <AppIcon name="info" size={20} color={airbnbRed} />
           <Text style={styles.noteText}>
             Seeded with public June 2026 event information and neighborhood planning ideas. Verify tickets,
             hours, capacity, and match audio before heading out.
@@ -290,15 +326,15 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
     >
       <View style={styles.detailTopRow}>
         <View style={[styles.kindBadge, { backgroundColor: spot.accent }]}>
-          <Ionicons
-            name={spot.kind === 'culture' ? 'walk-outline' : spot.kind === 'final' ? 'trophy-outline' : 'tv-outline'}
+          <AppIcon
+            name={spot.kind === 'culture' ? 'walk' : spot.kind === 'final' ? 'trophy' : 'tv'}
             size={15}
             color="#FFFFFF"
           />
           <Text style={styles.kindText}>{spot.kind}</Text>
         </View>
         <View style={styles.ratingWrap}>
-          <Ionicons name="star" size={14} color="#FFB400" />
+          <AppIcon name="star" size={14} color="#FFB400" />
           <Text style={styles.ratingText}>Plan pick</Text>
         </View>
       </View>
@@ -309,10 +345,10 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
       <Text style={styles.detailBody}>{spot.details}</Text>
 
       <View style={styles.factGrid}>
-        <Fact icon="time-outline" label="Window" value={spot.nextWindow} />
-        <Fact icon="people-outline" label="Crowd" value={spot.crowd} />
-        <Fact icon="ticket-outline" label="Cost" value={spot.price} />
-        <Fact icon="train-outline" label="Transit" value={spot.transit} />
+        <Fact icon="time" label="Window" value={spot.nextWindow} />
+        <Fact icon="people" label="Crowd" value={spot.crowd} />
+        <Fact icon="ticket" label="Cost" value={spot.price} />
+        <Fact icon="train" label="Transit" value={spot.transit} />
       </View>
 
       <Text style={styles.microHeading}>Countries to follow</Text>
@@ -336,10 +372,10 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
   );
 }
 
-function Fact({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
+function Fact({ icon, label, value }: { icon: AppIconName; label: string; value: string }) {
   return (
     <View style={styles.fact}>
-      <Ionicons name={icon} size={16} color={airbnbRed} />
+      <AppIcon name={icon} size={16} color={airbnbRed} />
       <Text style={styles.factLabel}>{label}</Text>
       <Text style={styles.factValue}>{value}</Text>
     </View>
@@ -351,14 +387,14 @@ function SectionHeader({
   title,
   actionLabel
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: AppIconName;
   title: string;
   actionLabel: string;
 }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionTitleWrap}>
-        <Ionicons name={icon} size={20} color={ink} />
+        <AppIcon name={icon} size={20} color={ink} />
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       <Text style={styles.sectionAction}>{actionLabel}</Text>
@@ -367,6 +403,10 @@ function SectionHeader({
 }
 
 const styles = StyleSheet.create({
+  appIcon: {
+    fontWeight: '900',
+    textAlign: 'center'
+  },
   safeArea: {
     flex: 1,
     backgroundColor: sand
