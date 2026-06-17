@@ -44,51 +44,8 @@ STATUS_LABEL="$(node -e "const s=process.argv[1]; const labels={passed:'passed',
 
 if [ -f "${REPORT_PATH}" ]; then
   TOP_ISSUE="$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const issue=(r.issues&&r.issues[0])||r.summary||'No issues reported.'; process.stdout.write(String(issue).replace(/\\s+/g,' ').slice(0,240));" "${REPORT_PATH}")"
-  SCREENSHOTS_CELL="$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const shots=r.screenshots||[]; if(!shots.length){process.stdout.write('None captured'); process.exit(0);} process.stdout.write(shots.slice(0,3).map((s)=>s.blobUrl?'<img src=\"'+s.blobUrl+'\" width=\"180\" alt=\"'+(s.label||s.fileName)+'\" />':(s.label||s.fileName)).join('<br>'));" "${REPORT_PATH}")"
-  SCREENSHOTS_PREVIEW="$(node -e '
-const fs = require("fs");
-const report = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-const screenshots = report.screenshots || [];
-const escapeHtml = (value) =>
-  String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-if (!screenshots.length) {
-  process.stdout.write("No screenshots captured.");
-  process.exit(0);
-}
-
-const publicScreenshots = screenshots.filter((screenshot) => screenshot.blobUrl).slice(0, 3);
-if (publicScreenshots.length) {
-  process.stdout.write(
-    publicScreenshots
-      .map((screenshot) => {
-        const label = escapeHtml(screenshot.label || screenshot.fileName);
-        const url = escapeHtml(screenshot.blobUrl);
-        return `<a href="${url}"><img src="${url}" width="220" alt="${label}" /></a>`;
-      })
-      .join("\n\n")
-  );
-  process.exit(0);
-}
-
-const uploadError = screenshots.map((screenshot) => screenshot.uploadError).find(Boolean);
-if (uploadError) {
-  process.stdout.write(
-    `Inline previews unavailable: public screenshot upload failed (${String(uploadError)
-      .replace(/\s+/g, " ")
-      .slice(0, 180)}).`
-  );
-  process.exit(0);
-}
-
-process.stdout.write(
-  "Inline previews unavailable: set `BLOB_READ_WRITE_TOKEN` in the EAS preview environment so the workflow can publish screenshots to public image URLs."
-);
-' "${REPORT_PATH}")"
+  SCREENSHOTS_CELL="$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const shots=r.screenshots||[]; if(!shots.length){process.stdout.write('None captured'); process.exit(0);} process.stdout.write(shots.slice(0,3).map((s)=>s.label||s.fileName).join('<br>'));" "${REPORT_PATH}")"
+  SCREENSHOTS_PREVIEW="Screenshot previews will be published after QA completes."
   RECORDINGS_CELL="$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const recs=r.recordings||[]; const fmt=(bytes)=>{ if(!Number.isFinite(bytes)||bytes<=0) return '0 B'; const units=['B','KB','MB','GB']; let value=bytes; let index=0; while(value>=1024&&index<units.length-1){value/=1024; index+=1;} return (value>=10||index===0?value.toFixed(0):value.toFixed(1))+' '+units[index]; }; if(!recs.length){process.stdout.write('None captured'); process.exit(0);} process.stdout.write(recs.slice(0,4).map((r)=>String(r.label||r.fileName)+' ('+fmt(Number(r.bytes||0))+')').join('<br>'));" "${REPORT_PATH}")"
 else
   TOP_ISSUE="No QA report was produced."

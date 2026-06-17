@@ -94,7 +94,9 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
-      screenshots_preview: ${{ steps.run_agent_qa.outputs.screenshots_preview }}
+      screenshots_preview: ${{ steps.publish_screenshots.outputs.screenshots_preview || steps.run_agent_qa.outputs.screenshots_preview }}
+      screenshots_artifact_branch: ${{ steps.publish_screenshots.outputs.screenshots_artifact_branch }}
+      screenshots_artifact_path: ${{ steps.publish_screenshots.outputs.screenshots_artifact_path }}
       screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
@@ -126,6 +128,13 @@ jobs:
           AGENT_DEVICE_PLATFORM: android
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
+      - id: publish_screenshots
+        env:
+          QA_ARTIFACT_BRANCH: qa-artifacts
+          QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
+          QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
+          QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
+        run: bash ./scripts/agent-qa/publish-screenshots-to-github.sh
       - uses: eas/upload_artifact
         id: upload_screenshots
         with:
@@ -144,7 +153,9 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
-      screenshots_preview: ${{ steps.run_agent_qa.outputs.screenshots_preview }}
+      screenshots_preview: ${{ steps.publish_screenshots.outputs.screenshots_preview || steps.run_agent_qa.outputs.screenshots_preview }}
+      screenshots_artifact_branch: ${{ steps.publish_screenshots.outputs.screenshots_artifact_branch }}
+      screenshots_artifact_path: ${{ steps.publish_screenshots.outputs.screenshots_artifact_path }}
       screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
@@ -178,6 +189,13 @@ jobs:
           AGENT_DEVICE_PLATFORM: ios
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
+      - id: publish_screenshots
+        env:
+          QA_ARTIFACT_BRANCH: qa-artifacts
+          QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
+          QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
+          QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
+        run: bash ./scripts/agent-qa/publish-screenshots-to-github.sh
       - uses: eas/upload_artifact
         id: upload_screenshots
         with:
@@ -206,6 +224,8 @@ jobs:
 
         ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }}
 
+        Branch: `${{ after.qa_ios.outputs.screenshots_artifact_branch || 'not published' }}`
+        Path: `${{ after.qa_ios.outputs.screenshots_artifact_path || 'not published' }}`
         Artifact: `worldcup-agent-qa-ios-screenshots`
         ID: `${{ after.qa_ios.outputs.screenshots_artifact_id || 'not uploaded' }}`
 

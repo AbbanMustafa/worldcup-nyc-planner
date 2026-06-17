@@ -4,7 +4,6 @@ import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { anthropic } from '@ai-sdk/anthropic';
-import { put } from '@vercel/blob';
 import { generateText, gateway, hasToolCall, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
 
@@ -28,7 +27,6 @@ const QA_PROVIDER = process.env.QA_PROVIDER || 'anthropic';
 const MODEL_ID =
   process.env.QA_MODEL || (QA_PROVIDER === 'anthropic' ? 'claude-haiku-4-5' : 'openai/gpt-5.4-mini');
 const BOOTSTRAP_ERROR = process.env.AGENT_QA_BOOTSTRAP_ERROR;
-const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const pr = parseJson(process.env.PR_JSON, {});
 
 const context = {
@@ -637,21 +635,6 @@ async function collectScreenshots(screenshotLabels) {
       label: labelByFileName.get(fileName) || humanizeScreenshotLabel(fileName)
     };
 
-    if (BLOB_READ_WRITE_TOKEN) {
-      try {
-        const blob = await put(blobPath(fileName), await readFile(absolutePath), {
-          access: 'public',
-          contentType: fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
-          token: BLOB_READ_WRITE_TOKEN
-        });
-        screenshot.blobUrl = blob.url;
-        screenshot.blobDownloadUrl = blob.downloadUrl;
-        screenshot.blobPathname = blob.pathname;
-      } catch (error) {
-        screenshot.uploadError = error instanceof Error ? error.message : String(error);
-      }
-    }
-
     screenshots.push(screenshot);
   }
 
@@ -835,23 +818,6 @@ function statusLabel(status) {
       unsure: 'unsure'
     }[status] || status
   );
-}
-
-function blobPath(fileName) {
-  const prefix = [
-    'worldcup-agent-qa',
-    context.prNumber ? `pr-${context.prNumber}` : 'manual',
-    context.buildId || Date.now().toString(),
-    QA_PLATFORM
-  ]
-    .map(sanitizePathPart)
-    .join('/');
-
-  return `${prefix}/${sanitizePathPart(fileName)}`;
-}
-
-function sanitizePathPart(value) {
-  return String(value).replace(/[^a-zA-Z0-9._-]/g, '-');
 }
 
 function humanizeArtifactLabel(fileName) {
