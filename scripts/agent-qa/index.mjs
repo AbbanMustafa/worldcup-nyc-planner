@@ -93,7 +93,7 @@ async function main() {
     const result = await generateText({
       model: createModel(),
       temperature: 0.2,
-      stopWhen: [hasToolCall('write_report'), stepCountIs(14)],
+      stopWhen: [hasToolCall('write_report'), stepCountIs(20)],
       tools: {
         app_context: appContextTool(),
         agent_device: agentDeviceTool(),
@@ -160,11 +160,12 @@ function buildPrompt() {
     '- The app launches to "World Cup stays local." without a redbox/logbox overlay.',
     '- The search field is visible and usable.',
     '- The real NYC map is visible and not blank; OpenStreetMap raster tiles or native map UI should be present.',
+    '- The map can be zoomed and pins can be selected without marker sizing or selection regressions.',
     '- Pins and labels update when filters change.',
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
-    '- Matchday Passports are visible and the Argentina passport opens an itinerary with a watch-party plan.',
+    '- Matchday Passports are visible and Argentina, Korea Republic, and Senegal passports each open an itinerary.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -176,23 +177,37 @@ function buildPrompt() {
     '- id="filter-final"',
     '- id="map-shell"',
     '- id="real-map"',
+    '- id="map-zoom-in"',
+    '- id="map-pin-koreatown"',
+    '- id="map-pin-jackson-heights"',
+    '- id="map-pin-astoria"',
     '- id="spot-detail-card"',
     '- id="matchday-passports"',
     '- id="passport-card-argentina-passport"',
+    '- id="passport-card-korea-passport"',
+    '- id="passport-card-senegal-passport"',
     '- id="passport-detail-argentina-passport"',
+    '- id="passport-detail-korea-passport"',
+    '- id="passport-detail-senegal-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
     '2. Use agent_device with ["react-native", "dismiss-overlay"] if a React Native overlay appears.',
     '3. Use agent_device with ["appstate"], then ["snapshot", "-i"].',
     `4. Capture a home screenshot at ${path.join(SCREENSHOTS_DIR, '01-home.png')}.`,
-    '5. Press id="filter-culture"; verify "Culture" content, route cards, and the active pin count.',
-    `6. Capture a culture screenshot at ${path.join(SCREENSHOTS_DIR, '02-culture.png')}.`,
-    '7. Fill id="search-input" with "Koreatown"; verify the Koreatown card and Korea Republic country chip.',
-    `8. Capture a search screenshot at ${path.join(SCREENSHOTS_DIR, '03-search-koreatown.png')}.`,
-    '9. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
-    `10. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '04-argentina-passport.png')}.`,
-    '11. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '5. Press id="map-zoom-in", then select id="map-pin-koreatown", id="map-pin-jackson-heights", and id="map-pin-astoria".',
+    `6. Capture a zoomed map and pin-selection screenshot at ${path.join(SCREENSHOTS_DIR, '02-map-pins.png')}.`,
+    '7. Press id="filter-culture"; verify "Culture" content, route cards, and the active pin count.',
+    `8. Capture a culture screenshot at ${path.join(SCREENSHOTS_DIR, '03-culture.png')}.`,
+    '9. Fill id="search-input" with "Koreatown"; verify the Koreatown card and Korea Republic country chip.',
+    `10. Capture a search screenshot at ${path.join(SCREENSHOTS_DIR, '04-search-koreatown.png')}.`,
+    '11. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
+    `12. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')}.`,
+    '13. Select id="passport-card-korea-passport" and verify "Koreatown room with match audio".',
+    `14. Capture a Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-korea-passport.png')}.`,
+    '15. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
+    `16. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
+    '17. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -214,21 +229,36 @@ function appContextTool() {
         'id="filter-culture"',
         'id="map-shell"',
         'id="real-map"',
+        'id="map-zoom-in"',
+        'id="map-pin-koreatown"',
+        'id="map-pin-jackson-heights"',
+        'id="map-pin-astoria"',
         'id="spot-detail-card"',
         'id="matchday-passports"',
         'id="passport-card-argentina-passport"',
-        'id="passport-detail-argentina-passport"'
+        'id="passport-card-korea-passport"',
+        'id="passport-card-senegal-passport"',
+        'id="passport-detail-argentina-passport"',
+        'id="passport-detail-korea-passport"',
+        'id="passport-detail-senegal-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
         'Simulator QA demo',
         'NYC culture map',
+        'Koreatown Red Devils Stop',
+        'Jackson Heights Nations Loop',
+        'Astoria Mediterranean Run',
         'Culture',
         'Koreatown Red Devils Stop',
         'Korea Republic',
         'Matchday passports',
         'Argentina Matchday Passport',
-        'Queens football bar near Roosevelt Av'
+        'Queens football bar near Roosevelt Av',
+        'Korea Republic Night Plan',
+        'Koreatown room with match audio',
+        'Senegal Harlem Walk',
+        'Harlem screen near the restaurant crawl'
       ],
       deterministicChecks: qaChecks,
       launchAttempts
@@ -366,8 +396,52 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
+    name: 'Map zoom control visible',
+    args: ['is', 'visible', 'id="map-zoom-in"'],
+    critical: true
+  });
+  await recordQaCheck({
     name: 'Home screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '01-home.png')]
+  });
+  await recordQaCheck({
+    name: 'Map zoom interaction works',
+    args: ['press', 'id="map-zoom-in"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Koreatown map pin selectable',
+    args: ['press', 'id="map-pin-koreatown"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Koreatown route selected from map',
+    args: ['wait', 'text', 'Koreatown Red Devils Stop', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Jackson Heights map pin selectable',
+    args: ['press', 'id="map-pin-jackson-heights"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Jackson Heights route selected from map',
+    args: ['wait', 'text', 'Jackson Heights Nations Loop', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Astoria map pin selectable',
+    args: ['press', 'id="map-pin-astoria"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Astoria route selected from map',
+    args: ['wait', 'text', 'Astoria Mediterranean Run', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Zoomed map pin screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '02-map-pins.png')]
   });
   await recordQaCheck({
     name: 'Culture filter selectable',
@@ -381,7 +455,7 @@ async function runDeterministicSmoke() {
   });
   await recordQaCheck({
     name: 'Culture screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '02-culture.png')]
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '03-culture.png')]
   });
   await recordQaCheck({
     name: 'Koreatown search can be entered',
@@ -395,7 +469,7 @@ async function runDeterministicSmoke() {
   });
   await recordQaCheck({
     name: 'Koreatown search screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '03-search-koreatown.png')]
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '04-search-koreatown.png')]
   });
 
   await runAgentDevice(['keyboard', 'dismiss'], { allowFailure: true });
@@ -430,7 +504,54 @@ async function runDeterministicSmoke() {
   });
   await recordQaCheck({
     name: 'Argentina passport screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '04-argentina-passport.png')]
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Korea Republic passport selectable',
+    args: ['press', 'id="passport-card-korea-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Korea Republic passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-korea-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Korea Republic passport watch party visible',
+    args: ['wait', 'text', 'Koreatown room with match audio', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Korea Republic passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '06-korea-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Senegal',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Senegal passport card visible',
+    args: ['wait', 'text', 'Senegal Harlem Walk', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Senegal passport selectable',
+    args: ['press', 'id="passport-card-senegal-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Senegal passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-senegal-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Senegal passport watch party visible',
+    args: ['wait', 'text', 'Harlem screen near the restaurant crawl', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Senegal passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
   });
 }
 
@@ -596,7 +717,7 @@ async function writeFallbackReport(modelText) {
   const summary =
     criticalFailures.length > 0
       ? `Deterministic ${PLATFORM_LABEL} smoke QA found ${criticalFailures.length} critical failure(s). The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`
-      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, search, map mounting, the Culture filter, Koreatown search, and the Argentina Matchday Passport. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
+      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, map zoom and pin selection, the Culture filter, Koreatown search, and Argentina, Korea Republic, and Senegal Matchday Passports. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
 
   await writeReport({
     overallStatus: criticalFailures.length > 0 ? 'failed' : 'passed',
