@@ -188,7 +188,7 @@ if (!screenshots.length) {
 const baseUrl = `https://github.com/${repository}/raw/${encodeURIComponent(branch)}/${encodePath(destinationPrefix)}`;
 process.stdout.write(
   screenshots
-    .slice(0, 4)
+    .slice(0, 5)
     .map((screenshot) => {
       const label = escapeHtml(screenshot.label || screenshot.fileName);
       const url = `${baseUrl}/${encodeURIComponent(screenshot.fileName)}`;
