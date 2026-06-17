@@ -96,7 +96,7 @@ jobs:
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
     env:
       BUILD_ID: ${{ after.android_repack.outputs.build_id || after.android_build.outputs.build_id }}
-      PR_JSON: ${{ toJSON(github.event.pull_request) }}
+      PR_JSON: "{}"
       WORKFLOW_URL: ${{ workflow.url }}
       QA_PROVIDER: anthropic
       QA_MODEL: claude-haiku-4-5
@@ -136,7 +136,7 @@ jobs:
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
     env:
       BUILD_ID: ${{ after.ios_repack.outputs.build_id || after.ios_build.outputs.build_id }}
-      PR_JSON: ${{ toJSON(github.event.pull_request) }}
+      PR_JSON: "{}"
       WORKFLOW_URL: ${{ workflow.url }}
       QA_PROVIDER: anthropic
       QA_MODEL: claude-haiku-4-5
