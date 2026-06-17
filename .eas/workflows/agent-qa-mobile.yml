@@ -94,6 +94,7 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
+      screenshots_preview: ${{ steps.run_agent_qa.outputs.screenshots_preview }}
       screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
@@ -143,6 +144,7 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
+      screenshots_preview: ${{ steps.run_agent_qa.outputs.screenshots_preview }}
       screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
@@ -196,7 +198,11 @@ jobs:
         | --- | --- | --- |
         | iOS | ${{ after.qa_ios.outputs.status_label || 'blocked' }} | ${{ after.qa_ios.outputs.top_issue || 'No iOS QA report was produced.' }} |
 
-        ### Screenshots
+        ### Screenshot previews
+
+        ${{ after.qa_ios.outputs.screenshots_preview || 'No inline screenshot previews were produced.' }}
+
+        ### Screenshot artifact
 
         ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }}
 
