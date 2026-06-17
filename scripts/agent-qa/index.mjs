@@ -158,6 +158,7 @@ function buildPrompt() {
     '- The UI should feel Airbnb-like: search, filter pills, map pins, detail cards, and polished itinerary cards.',
     '',
     'Critical acceptance checks:',
+    '- The demo label "Simulator QA demo" is visible in the header.',
     '- The app launches to "World Cup stays local." without a redbox/logbox overlay.',
     '- The search field is visible and usable.',
     '- The real NYC map is visible and not blank; OpenStreetMap raster tiles or native map UI should be present.',
@@ -213,6 +214,7 @@ function appContextTool() {
       ],
       expectedText: [
         'World Cup stays local.',
+        'Simulator QA demo',
         'NYC culture map',
         'Culture',
         'Koreatown Red Devils Stop',
@@ -332,7 +334,13 @@ async function runDeterministicSmoke() {
     critical: true
   });
 
-  if (!launched || homeCheck.status === 'failed') {
+  const demoLabelCheck = await recordQaCheck({
+    name: 'Demo label visible',
+    args: ['wait', 'text', 'Simulator QA demo', '3000'],
+    critical: true
+  });
+
+  if (!launched || homeCheck.status === 'failed' || demoLabelCheck.status === 'failed') {
     await collectDebugEvidence('Home screen did not appear; skipping deeper UI checks.');
     return;
   }

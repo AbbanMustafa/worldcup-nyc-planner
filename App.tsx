@@ -152,7 +152,7 @@ export default function App() {
             <AppIcon name="ball" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.headerCopy}>
-            <Text style={styles.kicker}>NYC match-day planner</Text>
+            <Text style={styles.kicker}>Simulator QA demo</Text>
             <Text style={styles.title}>World Cup stays local.</Text>
           </View>
           <Pressable style={styles.iconButton} accessibilityLabel="Open saved plans">

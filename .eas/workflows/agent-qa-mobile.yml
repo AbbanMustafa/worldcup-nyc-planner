@@ -23,6 +23,7 @@ jobs:
   android_get_build:
     name: Find reusable Android build
     needs: [fingerprint]
+    if: ${{ github.event_name != 'pull_request' }}
     type: get-build
     params:
       platform: android
@@ -34,7 +35,7 @@ jobs:
   android_repack:
     name: Repack Android build
     needs: [android_get_build]
-    if: ${{ needs.android_get_build.outputs.build_id }}
+    if: ${{ github.event_name != 'pull_request' && needs.android_get_build.outputs.build_id }}
     type: repack
     params:
       build_id: ${{ needs.android_get_build.outputs.build_id }}
@@ -44,7 +45,7 @@ jobs:
   android_build:
     name: Build Android app
     needs: [android_get_build]
-    if: ${{ !needs.android_get_build.outputs.build_id }}
+    if: ${{ github.event_name != 'pull_request' && !needs.android_get_build.outputs.build_id }}
     type: build
     params:
       platform: android
@@ -85,7 +86,7 @@ jobs:
   qa_android:
     name: Android agent-device QA
     after: [android_repack, android_build]
-    if: ${{ after.android_repack.status == 'success' || after.android_build.status == 'success' }}
+    if: ${{ github.event_name != 'pull_request' && (after.android_repack.status == 'success' || after.android_build.status == 'success') }}
     environment: preview
     runs_on: linux-medium-nested-virtualization
     outputs:
@@ -184,7 +185,7 @@ jobs:
 
   qa_comment:
     name: Comment on PR
-    after: [qa_android, qa_ios]
+    after: [qa_ios]
     if: ${{ always() && github.event_name == 'pull_request' }}
     type: github-comment
     params:
@@ -193,21 +194,14 @@ jobs:
 
         | Platform | Status | Issues |
         | --- | --- | --- |
-        | Android | ${{ after.qa_android.outputs.status_label || 'blocked' }} | ${{ after.qa_android.outputs.top_issue || 'No Android QA report was produced.' }} |
         | iOS | ${{ after.qa_ios.outputs.status_label || 'blocked' }} | ${{ after.qa_ios.outputs.top_issue || 'No iOS QA report was produced.' }} |
 
         ### Screenshots
 
-        | Android | iOS |
-        | --- | --- |
-        | ${{ after.qa_android.outputs.screenshots_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-android-screenshots`<br>ID: `${{ after.qa_android.outputs.screenshots_artifact_id || 'not uploaded' }}` | ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-ios-screenshots`<br>ID: `${{ after.qa_ios.outputs.screenshots_artifact_id || 'not uploaded' }}` |
+        ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }}
 
-        <details>
-        <summary>Full Android report</summary>
-
-        ${{ after.qa_android.outputs.section_body || 'No Android QA section was produced.' }}
-
-        </details>
+        Artifact: `worldcup-agent-qa-ios-screenshots`
+        ID: `${{ after.qa_ios.outputs.screenshots_artifact_id || 'not uploaded' }}`
 
         <details>
         <summary>Full iOS report</summary>
