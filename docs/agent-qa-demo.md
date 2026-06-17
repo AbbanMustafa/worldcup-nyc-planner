@@ -22,7 +22,6 @@ Add these to the `preview` EAS environment:
 
 - `ANTHROPIC_API_KEY`: required by default. The workflow uses `QA_PROVIDER=anthropic` and `QA_MODEL=claude-haiku-4-5`.
 - `BLOB_READ_WRITE_TOKEN`: optional, but recommended so PR comments can show uploaded screenshots.
-- `GOOGLE_MAPS_ANDROID_API_KEY`: recommended for Android release builds because `react-native-maps` uses Google Maps on Android.
 
 ```bash
 eas env:create preview \

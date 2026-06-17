@@ -19,7 +19,7 @@ npm run android
 ## What is included
 
 - Airbnb-inspired mobile UI with a search bar, filter pills, cards, and soft map styling.
-- Real maps: Leaflet + OpenStreetMap on web, and `react-native-maps` on iOS/Android.
+- Real maps: Leaflet + OpenStreetMap on web, and OpenStreetMap raster tiles on iOS/Android.
 - Tappable lat/lon pins with the same filters and selected-place detail card.
 - Seeded watch hubs, fan-zone ideas, culture-first neighborhood routes, and upcoming match pairings.
 - Verification note in-app because hours, tickets, capacity rules, and watch-party programming can change.

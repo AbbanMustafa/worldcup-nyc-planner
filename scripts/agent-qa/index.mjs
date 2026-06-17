@@ -161,7 +161,7 @@ function buildPrompt() {
     'Critical acceptance checks:',
     '- The app launches to "World Cup stays local." without a redbox/logbox overlay.',
     '- The search field is visible and usable.',
-    '- The real NYC map is visible and not blank; native map tiles or Apple/Google map UI should be present.',
+    '- The real NYC map is visible and not blank; OpenStreetMap raster tiles or native map UI should be present.',
     '- Pins and labels update when filters change.',
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
