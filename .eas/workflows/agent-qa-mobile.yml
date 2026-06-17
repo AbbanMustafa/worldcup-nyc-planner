@@ -93,8 +93,8 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
+      screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
-      recordings_artifact_id: ${{ steps.upload_recordings.outputs.artifact_id }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
     env:
       BUILD_ID: ${{ after.android_repack.outputs.build_id || after.android_build.outputs.build_id }}
@@ -105,6 +105,7 @@ jobs:
       QA_PLATFORM: android
       APPLICATION_ID: com.abbanmustafa.worldcupnyc
       AGENT_DEVICE_ANDROID_DEVICE: ci-android
+      AGENT_QA_RECORD_SCREEN: "0"
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
@@ -124,10 +125,10 @@ jobs:
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
       - uses: eas/upload_artifact
-        id: upload_recordings
+        id: upload_screenshots
         with:
-          name: worldcup-agent-qa-android-recordings
-          path: artifacts/qa/recordings/*.mp4
+          name: worldcup-agent-qa-android-screenshots
+          path: artifacts/qa/screenshots/*.png
           ignore_error: true
 
   qa_ios:
@@ -141,8 +142,8 @@ jobs:
       status_label: ${{ steps.run_agent_qa.outputs.status_label }}
       top_issue: ${{ steps.run_agent_qa.outputs.top_issue }}
       screenshots_cell: ${{ steps.run_agent_qa.outputs.screenshots_cell }}
+      screenshots_artifact_id: ${{ steps.upload_screenshots.outputs.artifact_id }}
       recordings_cell: ${{ steps.run_agent_qa.outputs.recordings_cell }}
-      recordings_artifact_id: ${{ steps.upload_recordings.outputs.artifact_id }}
       section_body: ${{ steps.run_agent_qa.outputs.section_body }}
     env:
       BUILD_ID: ${{ after.ios_repack.outputs.build_id || after.ios_build.outputs.build_id }}
@@ -155,6 +156,7 @@ jobs:
       AGENT_DEVICE_IOS_DEVICE: iPhone 17
       AGENT_DEVICE_DAEMON_TIMEOUT_MS: "180000"
       AGENT_DEVICE_IOS_BOOT_TIMEOUT_MS: "180000"
+      AGENT_QA_RECORD_SCREEN: "0"
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
@@ -174,10 +176,10 @@ jobs:
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
       - uses: eas/upload_artifact
-        id: upload_recordings
+        id: upload_screenshots
         with:
-          name: worldcup-agent-qa-ios-recordings
-          path: artifacts/qa/recordings/*.mp4
+          name: worldcup-agent-qa-ios-screenshots
+          path: artifacts/qa/screenshots/*.png
           ignore_error: true
 
   qa_comment:
@@ -198,13 +200,7 @@ jobs:
 
         | Android | iOS |
         | --- | --- |
-        | ${{ after.qa_android.outputs.screenshots_cell || 'N/A' }} | ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }} |
-
-        ### Screen recordings
-
-        | Android | iOS |
-        | --- | --- |
-        | ${{ after.qa_android.outputs.recordings_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-android-recordings`<br>ID: `${{ after.qa_android.outputs.recordings_artifact_id || 'not uploaded' }}` | ${{ after.qa_ios.outputs.recordings_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-ios-recordings`<br>ID: `${{ after.qa_ios.outputs.recordings_artifact_id || 'not uploaded' }}` |
+        | ${{ after.qa_android.outputs.screenshots_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-android-screenshots`<br>ID: `${{ after.qa_android.outputs.screenshots_artifact_id || 'not uploaded' }}` | ${{ after.qa_ios.outputs.screenshots_cell || 'N/A' }}<br>Artifact: `worldcup-agent-qa-ios-screenshots`<br>ID: `${{ after.qa_ios.outputs.screenshots_artifact_id || 'not uploaded' }}` |
 
         <details>
         <summary>Full Android report</summary>

@@ -1,7 +1,6 @@
 import { execFile as execFileCallback } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { anthropic } from '@ai-sdk/anthropic';
@@ -13,7 +12,7 @@ const execFile = promisify(execFileCallback);
 
 const ROOT_DIR = process.cwd();
 const ARTIFACTS_DIR = path.join(ROOT_DIR, 'artifacts', 'qa');
-const SCREENSHOTS_DIR = path.join(tmpdir(), `worldcup-agent-qa-${Date.now()}`);
+const SCREENSHOTS_DIR = path.join(ARTIFACTS_DIR, 'screenshots');
 const RECORDINGS_DIR = path.join(ARTIFACTS_DIR, 'recordings');
 const REPORT_PATH = path.join(ARTIFACTS_DIR, 'report.json');
 const SECTION_PATH = path.join(ARTIFACTS_DIR, 'section.md');
@@ -625,6 +624,7 @@ async function collectScreenshots(screenshotLabels) {
     const screenshot = {
       fileName,
       absolutePath,
+      relativePath: path.relative(ROOT_DIR, absolutePath),
       bytes: fileStat.size,
       label: labelByFileName.get(fileName) || humanizeScreenshotLabel(fileName)
     };
@@ -710,7 +710,7 @@ function renderSection(report) {
   if (report.screenshots.length > 0) {
     lines.push('**Screenshots**', '');
     for (const screenshot of report.screenshots) {
-      const target = screenshot.blobUrl || screenshot.absolutePath;
+      const target = screenshot.blobUrl || screenshot.relativePath || screenshot.absolutePath;
       lines.push(`- [${screenshot.label || screenshot.fileName}](${target})`);
     }
     lines.push('');
