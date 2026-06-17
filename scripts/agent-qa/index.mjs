@@ -438,16 +438,42 @@ async function ensureAppOpen(reason) {
 }
 
 async function collectDebugEvidence(reason) {
+  const logsPathResult = await runAgentDevice(['logs', 'path'], { allowFailure: true });
+  const logTail = await readAgentDeviceLogTail(logsPathResult);
+
   qaChecks.push({
     name: 'Debug evidence collection',
     status: 'passed',
     critical: false,
     command: 'agent-device appstate; agent-device logs path; agent-device logs doctor',
-    detail: reason
+    detail: logTail ? `${reason} Log tail: ${logTail}` : reason
   });
   await runAgentDevice(['appstate'], { allowFailure: true });
-  await runAgentDevice(['logs', 'path'], { allowFailure: true });
   await runAgentDevice(['logs', 'doctor'], { allowFailure: true });
+}
+
+async function readAgentDeviceLogTail(logsPathResult) {
+  const logsPath = extractFirstAbsolutePath(`${logsPathResult.stdout || ''}\n${logsPathResult.stderr || ''}`);
+  if (!logsPath || !existsSync(logsPath)) {
+    return '';
+  }
+
+  try {
+    const logText = await readFile(logsPath, 'utf8');
+    const interestingLines = logText
+      .split(/\r?\n/g)
+      .filter((line) =>
+        /worldcup|abbanmustafa|fatal|exception|error|crash|reactnative|google maps|api key|js/i.test(line)
+      );
+    const lines = interestingLines.length > 0 ? interestingLines : logText.split(/\r?\n/g);
+    return trim(lines.slice(-30).join('\n'), 1400);
+  } catch (error) {
+    return `Unable to read ${logsPath}: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
+function extractFirstAbsolutePath(value) {
+  return value.match(/(?:\/[^\s:]+)+/)?.[0] || '';
 }
 
 function shouldRetryAfterOpen(result) {
