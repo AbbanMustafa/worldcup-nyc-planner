@@ -110,6 +110,10 @@ jobs:
       APPLICATION_ID: com.abbanmustafa.worldcupnyc
       AGENT_DEVICE_ANDROID_DEVICE: ci-android
       AGENT_QA_RECORD_SCREEN: "0"
+      QA_ARTIFACT_BRANCH: qa-artifacts
+      QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
+      QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
+      QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
@@ -129,11 +133,6 @@ jobs:
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
       - id: publish_screenshots
-        env:
-          QA_ARTIFACT_BRANCH: qa-artifacts
-          QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
-          QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
-          QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
         run: bash ./scripts/agent-qa/publish-screenshots-to-github.sh
       - uses: eas/upload_artifact
         id: upload_screenshots
@@ -171,6 +170,10 @@ jobs:
       AGENT_DEVICE_DAEMON_TIMEOUT_MS: "180000"
       AGENT_DEVICE_IOS_BOOT_TIMEOUT_MS: "180000"
       AGENT_QA_RECORD_SCREEN: "0"
+      QA_ARTIFACT_BRANCH: qa-artifacts
+      QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
+      QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
+      QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
@@ -190,11 +193,6 @@ jobs:
           AGENT_DEVICE_SESSION_LOCK: strip
         run: bash ./scripts/agent-qa/run-and-export.sh "${{ steps.download_build.outputs.artifact_path }}"
       - id: publish_screenshots
-        env:
-          QA_ARTIFACT_BRANCH: qa-artifacts
-          QA_ARTIFACT_REPOSITORY: ${{ github.repository }}
-          QA_ARTIFACT_COMMIT_SHA: ${{ github.sha }}
-          QA_ARTIFACT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
         run: bash ./scripts/agent-qa/publish-screenshots-to-github.sh
       - uses: eas/upload_artifact
         id: upload_screenshots

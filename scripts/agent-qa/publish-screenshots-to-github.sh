@@ -10,6 +10,18 @@ COMMIT_SHA="${QA_ARTIFACT_COMMIT_SHA:-}"
 PR_NUMBER="${QA_ARTIFACT_PR_NUMBER:-}"
 PLATFORM="${QA_PLATFORM:-ios}"
 
+case "${REPOSITORY}" in
+  *github.* | *'${{'*) REPOSITORY="" ;;
+esac
+
+case "${COMMIT_SHA}" in
+  *github.* | *'${{'*) COMMIT_SHA="" ;;
+esac
+
+case "${PR_NUMBER}" in
+  *github.* | *'${{'*) PR_NUMBER="" ;;
+esac
+
 case "${REPORT_PATH}" in
   /*) ;;
   *) REPORT_PATH="${ROOT_DIR}/${REPORT_PATH}" ;;
