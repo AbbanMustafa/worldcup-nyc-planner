@@ -147,7 +147,8 @@ if [ "${PUBLISH_OK}" != "1" ]; then
   exit 0
 fi
 
-PREVIEW_MARKDOWN="$(node - "${REPORT_PATH}" "${REPOSITORY}" "${ARTIFACT_BRANCH}" "${DEST_PREFIX}" <<'NODE'
+PREVIEW_SCRIPT="${WORKTREE_DIR}/render-preview.js"
+cat > "${PREVIEW_SCRIPT}" <<'NODE'
 const fs = require('fs');
 
 const [, , reportPath, repository, branch, destinationPrefix] = process.argv;
@@ -184,7 +185,8 @@ process.stdout.write(
     .join('\n\n')
 );
 NODE
-)"
+
+PREVIEW_MARKDOWN="$(node "${PREVIEW_SCRIPT}" "${REPORT_PATH}" "${REPOSITORY}" "${ARTIFACT_BRANCH}" "${DEST_PREFIX}")"
 
 emit_output screenshots_preview "${PREVIEW_MARKDOWN}"
 emit_output screenshots_published "true"
