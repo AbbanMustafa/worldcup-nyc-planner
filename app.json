@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "World Cup NYC",
+    "owner": "mustafaexpo",
     "slug": "worldcup-nyc-planner",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,9 +12,11 @@
       "backgroundColor": "#FFF8F3"
     },
     "ios": {
+      "bundleIdentifier": "com.abbanmustafa.worldcupnyc",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.abbanmustafa.worldcupnyc",
       "adaptiveIcon": {
         "backgroundColor": "#FFF8F3"
       },
@@ -22,6 +25,11 @@
     "web": {
       "bundler": "metro",
       "output": "single"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d081f2b2-4f26-49da-bc99-d03f5ed1d5bd"
+      }
     }
   }
 }

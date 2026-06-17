@@ -104,7 +104,7 @@ export default function App() {
   const compact = width < 760;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} testID="worldcup-screen">
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
@@ -123,6 +123,7 @@ export default function App() {
         <View style={styles.searchWrap}>
           <Ionicons name="search" size={20} color={muted} />
           <TextInput
+            testID="search-input"
             value={query}
             onChangeText={setQuery}
             placeholder="Search teams, boroughs, vibes"
@@ -149,6 +150,7 @@ export default function App() {
             return (
               <Pressable
                 key={filter.id}
+                testID={`filter-${filter.id}`}
                 onPress={() => handleFilterChange(filter.id)}
                 style={[styles.filterPill, selected && styles.filterPillActive]}
               >
@@ -209,6 +211,7 @@ export default function App() {
             .map((spot) => (
               <Pressable
                 key={spot.id}
+                testID={`route-${spot.id}`}
                 style={styles.routeCard}
                 onPress={() => {
                   setActiveFilter('culture');
@@ -247,7 +250,7 @@ function InteractiveMap({
   onSelect: (spotId: string) => void;
 }) {
   return (
-    <View style={styles.mapShell}>
+    <View style={styles.mapShell} testID="map-shell">
       <View style={styles.mapHeader}>
         <View>
           <Text style={styles.mapTitle}>NYC culture map</Text>
@@ -268,7 +271,7 @@ function InteractiveMap({
 
 function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
   return (
-    <View style={styles.detailCard}>
+    <View style={styles.detailCard} testID="spot-detail-card">
       <View style={styles.detailTopRow}>
         <View style={[styles.kindBadge, { backgroundColor: spot.accent }]}>
           <Ionicons

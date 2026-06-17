@@ -2,6 +2,7 @@ node_modules/
 .expo/
 dist/
 web-build/
+artifacts/
 npm-debug.*
 yarn-debug.*
 yarn-error.*

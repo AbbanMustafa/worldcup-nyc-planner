@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import MapView, { Marker, type LatLng, type Region } from 'react-native-maps';
-import { StyleSheet } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, type LatLng, type Region } from 'react-native-maps';
+import { Platform, StyleSheet } from 'react-native';
 
 import type { Spot } from '../data';
 
@@ -43,7 +43,15 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
   }, [spots, visibleSpotKey]);
 
   return (
-    <MapView ref={mapRef} style={styles.map} initialRegion={initialRegion} showsCompass showsScale>
+    <MapView
+      ref={mapRef}
+      testID="real-map"
+      provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+      style={styles.map}
+      initialRegion={initialRegion}
+      showsCompass
+      showsScale
+    >
       {spots.map((spot) => {
         const selected = selectedId === spot.id;
         const coordinate: LatLng = {
