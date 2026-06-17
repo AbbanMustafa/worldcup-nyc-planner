@@ -124,6 +124,7 @@ export default function App() {
           <Ionicons name="search" size={20} color={muted} />
           <TextInput
             testID="search-input"
+            accessibilityLabel="Search teams, boroughs, vibes"
             value={query}
             onChangeText={setQuery}
             placeholder="Search teams, boroughs, vibes"
@@ -151,6 +152,9 @@ export default function App() {
               <Pressable
                 key={filter.id}
                 testID={`filter-${filter.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${filter.label} filter`}
+                accessibilityState={{ selected }}
                 onPress={() => handleFilterChange(filter.id)}
                 style={[styles.filterPill, selected && styles.filterPillActive]}
               >
@@ -183,6 +187,8 @@ export default function App() {
           renderItem={({ item }) => (
             <Pressable
               style={styles.matchCard}
+              accessibilityRole="button"
+              accessibilityLabel={`${formatFixture(item.fixture)} at ${item.venue}`}
               onPress={() => {
                 const matchSpot = spots.find((spot) => spot.name === item.neighborhoodMatch);
                 if (matchSpot) {
@@ -212,6 +218,8 @@ export default function App() {
               <Pressable
                 key={spot.id}
                 testID={`route-${spot.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${spot.name}, ${spot.neighborhood}, ${spot.borough}`}
                 style={styles.routeCard}
                 onPress={() => {
                   setActiveFilter('culture');
@@ -250,7 +258,11 @@ function InteractiveMap({
   onSelect: (spotId: string) => void;
 }) {
   return (
-    <View style={styles.mapShell} testID="map-shell">
+    <View
+      style={styles.mapShell}
+      testID="map-shell"
+      accessibilityLabel={`${visibleSpots.length} active World Cup map pins`}
+    >
       <View style={styles.mapHeader}>
         <View>
           <Text style={styles.mapTitle}>NYC culture map</Text>
@@ -271,7 +283,11 @@ function InteractiveMap({
 
 function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
   return (
-    <View style={styles.detailCard} testID="spot-detail-card">
+    <View
+      style={styles.detailCard}
+      testID="spot-detail-card"
+      accessibilityLabel={`${spot.name}, ${spot.neighborhood}, ${spot.borough}`}
+    >
       <View style={styles.detailTopRow}>
         <View style={[styles.kindBadge, { backgroundColor: spot.accent }]}>
           <Ionicons

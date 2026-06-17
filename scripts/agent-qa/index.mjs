@@ -45,6 +45,7 @@ const context = {
 };
 
 const agentDeviceTrace = [];
+const qaChecks = [];
 let reportWasWritten = false;
 
 await main();
@@ -79,6 +80,8 @@ async function main() {
   }
 
   try {
+    await runDeterministicSmoke();
+
     const result = await generateText({
       model: createModel(),
       temperature: 0.2,
@@ -92,20 +95,16 @@ async function main() {
         'You are a mobile QA agent running inside an EAS Workflow.',
         'Use agent-device to inspect and interact with the simulator or emulator.',
         'Prefer accessibility text and React Native testID selectors over coordinates.',
+        'Do not pass --session, --platform, --device, --udid, or --serial flags; the workflow already binds the target device.',
         'Capture screenshots as evidence. A report without screenshots is incomplete unless the app cannot launch.',
-        'Finish by calling write_report exactly once.'
+        'Do not narrate intermediate plans in the final response.',
+        'Finish by calling write_report exactly once. Returning plain text instead of write_report is a QA failure.'
       ].join('\n'),
       prompt: buildPrompt()
     });
 
     if (!reportWasWritten) {
-      await writeReport({
-        overallStatus: 'unsure',
-        summary: trim(result.text || 'The model finished without writing a structured report.', 800),
-        checked: ['The AI model returned text, but did not call write_report.'],
-        issues: ['No structured QA report was produced.'],
-        nextSteps: ['Review the raw agent text and rerun with a stronger prompt or more steps.']
-      });
+      await writeFallbackReport(result.text);
     }
   } catch (error) {
     await writeReport({
@@ -170,7 +169,7 @@ function buildPrompt() {
     '- id="spot-detail-card"',
     '',
     'Suggested flow:',
-    `1. Call app_context and read the app-specific test notes.`,
+    `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
     '2. Use agent_device with ["react-native", "dismiss-overlay"] if a React Native overlay appears.',
     '3. Use agent_device with ["appstate"], then ["snapshot", "-i"].',
     `4. Capture a home screenshot at ${path.join(SCREENSHOTS_DIR, '01-home.png')}.`,
@@ -207,7 +206,8 @@ function appContextTool() {
         'Culture',
         'Koreatown Red Devils Stop',
         'Korea Republic'
-      ]
+      ],
+      deterministicChecks: qaChecks
     })
   });
 }
@@ -264,10 +264,12 @@ function writeReportTool() {
 }
 
 async function runAgentDevice(args, options = {}) {
-  const command = `${AGENT_DEVICE_BIN} ${args.join(' ')}`;
+  const sanitizedArgs = sanitizeAgentDeviceArgs(args);
+  const command = formatCommand(sanitizedArgs);
+  const originalCommand = formatCommand(args);
 
   try {
-    const result = await execFile(AGENT_DEVICE_BIN, args, {
+    const result = await execFile(AGENT_DEVICE_BIN, sanitizedArgs, {
       cwd: ROOT_DIR,
       timeout: 120_000,
       maxBuffer: 6 * 1024 * 1024
@@ -278,7 +280,8 @@ async function runAgentDevice(args, options = {}) {
       ok: true,
       exitCode: 0,
       stdout: trim(result.stdout || ''),
-      stderr: trim(result.stderr || '')
+      stderr: trim(result.stderr || ''),
+      ...(command !== originalCommand ? { sanitizedFrom: originalCommand } : {})
     };
     agentDeviceTrace.push(entry);
     return entry;
@@ -288,7 +291,8 @@ async function runAgentDevice(args, options = {}) {
       ok: false,
       exitCode: typeof error?.code === 'number' ? error.code : 1,
       stdout: trim(error?.stdout || ''),
-      stderr: trim(error?.stderr || error?.message || '')
+      stderr: trim(error?.stderr || error?.message || ''),
+      ...(command !== originalCommand ? { sanitizedFrom: originalCommand } : {})
     };
     agentDeviceTrace.push(entry);
 
@@ -300,12 +304,112 @@ async function runAgentDevice(args, options = {}) {
   }
 }
 
+async function runDeterministicSmoke() {
+  await runAgentDevice(['react-native', 'dismiss-overlay'], { allowFailure: true });
+
+  await recordQaCheck({
+    name: 'Home title visible',
+    args: ['wait', 'text', 'World Cup stays local.', '15000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Search input visible',
+    args: ['is', 'visible', 'id="search-input"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Real map component mounted',
+    args: ['is', 'visible', 'id="real-map"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Home screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '01-home.png')]
+  });
+  await recordQaCheck({
+    name: 'Culture filter selectable',
+    args: ['press', 'id="filter-culture"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Culture result visible',
+    args: ['wait', 'text', 'Little Senegal Walk', '5000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Culture screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '02-culture.png')]
+  });
+  await recordQaCheck({
+    name: 'Koreatown search can be entered',
+    args: ['fill', 'id="search-input"', 'Koreatown'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Koreatown result visible',
+    args: ['wait', 'text', 'Koreatown Red Devils Stop', '5000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Koreatown search screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '03-search-koreatown.png')]
+  });
+
+  await runAgentDevice(['keyboard', 'dismiss'], { allowFailure: true });
+  if (context.applicationId) {
+    await runAgentDevice(['open', context.applicationId, '--relaunch'], { allowFailure: true });
+    await runAgentDevice(['wait', '1000'], { allowFailure: true });
+  }
+}
+
+async function recordQaCheck({ name, args, critical = false }) {
+  const result = await runAgentDevice(args, { allowFailure: true });
+  qaChecks.push({
+    name,
+    status: result.ok ? 'passed' : 'failed',
+    critical,
+    command: result.command,
+    detail: trim(result.ok ? result.stdout || 'Command completed.' : result.stderr || result.stdout, 300)
+  });
+  return result;
+}
+
+async function writeFallbackReport(modelText) {
+  const criticalFailures = qaChecks.filter((check) => check.critical && check.status === 'failed');
+  const summary =
+    criticalFailures.length > 0
+      ? `Deterministic ${PLATFORM_LABEL} smoke QA found ${criticalFailures.length} critical failure(s). The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`
+      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, search, map mounting, the Culture filter, and Koreatown search. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
+
+  await writeReport({
+    overallStatus: criticalFailures.length > 0 ? 'failed' : 'passed',
+    summary,
+    checked: [
+      ...qaChecks.map(formatQaCheck),
+      `AI fallback: ${trim(modelText || 'The model returned no text.', 500)}`
+    ],
+    issues: criticalFailures.map(formatQaCheck),
+    nextSteps:
+      criticalFailures.length > 0
+        ? ['Fix the failing deterministic checks above, then rerun the EAS workflow.']
+        : ['Keep the deterministic smoke report as the source of truth if the AI model omits write_report.']
+  });
+}
+
 async function writeReport(input) {
   await mkdir(ARTIFACTS_DIR, { recursive: true });
 
   const screenshots = await collectScreenshots(input.screenshotLabels || []);
+  const criticalFailures = qaChecks.filter((check) => check.critical && check.status === 'failed');
+  const checked = dedupe([...qaChecks.map(formatQaCheck), ...(input.checked || [])]);
+  const issues = dedupe([...criticalFailures.map(formatQaCheck), ...(input.issues || [])]);
+  const overallStatus =
+    criticalFailures.length > 0 && input.overallStatus === 'passed' ? 'failed' : input.overallStatus;
   const report = {
     ...input,
+    overallStatus,
+    checked,
+    issues,
     generatedAt: new Date().toISOString(),
     model: MODEL_ID,
     provider: QA_PROVIDER,
@@ -315,12 +419,15 @@ async function writeReport(input) {
     platformLabel: PLATFORM_LABEL,
     prNumber: context.prNumber,
     screenshots,
+    qaChecks,
     agentDeviceTrace
   };
 
+  const section = renderSection(report);
   await writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await writeFile(SECTION_PATH, renderSection(report), 'utf8');
+  await writeFile(SECTION_PATH, section, 'utf8');
   await writeFile(STATUS_PATH, `${report.overallStatus}\n`, 'utf8');
+  console.log(`\n--- QA REPORT (${PLATFORM_LABEL}) ---\n${section}--- END QA REPORT ---\n`);
 
   return report;
 }
@@ -400,6 +507,74 @@ function renderSection(report) {
   }
 
   return `${lines.join('\n').trim()}\n`;
+}
+
+function formatQaCheck(check) {
+  const detail = check.detail ? ` - ${check.detail.replace(/\s+/g, ' ')}` : '';
+  return `${check.status}: ${check.name} via \`${check.command}\`${detail}`;
+}
+
+function sanitizeAgentDeviceArgs(args) {
+  const rawArgs = args.map(String);
+  const sanitized = [];
+  const flagsWithValues = new Set([
+    '--session',
+    '--platform',
+    '--device',
+    '--udid',
+    '--serial',
+    '--android-device-allowlist',
+    '--ios-simulator-device-set',
+    '--session-lock',
+    '--session-lock-conflicts',
+    '--tenant',
+    '--run-id',
+    '--lease-id',
+    '--lease-backend'
+  ]);
+  const flagsWithoutValues = new Set(['--session-locked']);
+
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const arg = rawArgs[index];
+
+    if (index === 0 && arg === AGENT_DEVICE_BIN) {
+      continue;
+    }
+
+    if (flagsWithValues.has(arg)) {
+      index += 1;
+      continue;
+    }
+
+    if ([...flagsWithValues].some((flag) => arg.startsWith(`${flag}=`)) || flagsWithoutValues.has(arg)) {
+      continue;
+    }
+
+    if (/^-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?$/.test(arg)) {
+      sanitized.push(...arg.split(','));
+      continue;
+    }
+
+    sanitized.push(arg);
+  }
+
+  return sanitized.length > 0 ? sanitized : ['snapshot'];
+}
+
+function formatCommand(args) {
+  return [AGENT_DEVICE_BIN, ...args.map(String)].map(shellQuote).join(' ');
+}
+
+function shellQuote(value) {
+  if (/^[a-zA-Z0-9_./:=@-]+$/.test(value)) {
+    return value;
+  }
+
+  return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function dedupe(values) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 function appendList(lines, title, values = []) {

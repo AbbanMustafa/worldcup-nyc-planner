@@ -46,6 +46,7 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
     <MapView
       ref={mapRef}
       testID="real-map"
+      accessibilityLabel="Real NYC map with World Cup watch party pins"
       provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
       style={styles.map}
       initialRegion={initialRegion}
@@ -62,6 +63,8 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
         return (
           <Marker
             key={spot.id}
+            testID={`map-pin-${spot.id}`}
+            identifier={spot.id}
             coordinate={coordinate}
             onPress={() => onSelect(spot.id)}
             pinColor={spot.accent}
