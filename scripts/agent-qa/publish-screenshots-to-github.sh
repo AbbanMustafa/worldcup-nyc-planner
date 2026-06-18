@@ -187,12 +187,20 @@ if (!screenshots.length) {
 
 const isLaunchAttemptScreenshot = (screenshot) =>
   /^\d+-after-open\.(png|jpe?g)$/i.test(String(screenshot.fileName || ''));
+const isPassportScreenshot = (screenshot) =>
+  /-passport\.(png|jpe?g)$/i.test(String(screenshot.fileName || ''));
 const evidenceScreenshots = screenshots.filter((screenshot) => !isLaunchAttemptScreenshot(screenshot));
-const previewScreenshots = evidenceScreenshots.length ? evidenceScreenshots : screenshots;
+// Surface the passport screenshots (the feature under test) first so each matchday
+// passport appears in the preview, then fill remaining slots with the rest in order.
+const orderedEvidence = [
+  ...evidenceScreenshots.filter(isPassportScreenshot),
+  ...evidenceScreenshots.filter((screenshot) => !isPassportScreenshot(screenshot))
+];
+const previewScreenshots = orderedEvidence.length ? orderedEvidence : screenshots;
 const baseUrl = `https://github.com/${repository}/raw/${encodeURIComponent(branch)}/${encodePath(destinationPrefix)}`;
 process.stdout.write(
   previewScreenshots
-    .slice(0, 5)
+    .slice(0, 6)
     .map((screenshot) => {
       const label = escapeHtml(screenshot.label || screenshot.fileName);
       const url = `${baseUrl}/${encodeURIComponent(screenshot.fileName)}`;
