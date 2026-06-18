@@ -165,7 +165,7 @@ function buildPrompt() {
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
-    '- Matchday Passports are visible and Argentina, Korea Republic, France, and Senegal passports each open an itinerary.',
+    '- Matchday Passports are visible and Argentina, Korea Republic, France, Senegal, and Germany passports each open an itinerary.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -187,10 +187,12 @@ function buildPrompt() {
     '- id="passport-card-korea-passport"',
     '- id="passport-card-france-passport"',
     '- id="passport-card-senegal-passport"',
+    '- id="passport-card-germany-passport"',
     '- id="passport-detail-argentina-passport"',
     '- id="passport-detail-korea-passport"',
     '- id="passport-detail-france-passport"',
     '- id="passport-detail-senegal-passport"',
+    '- id="passport-detail-germany-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -211,7 +213,9 @@ function buildPrompt() {
     `16. Capture a France passport screenshot at ${path.join(SCREENSHOTS_DIR, '06b-france-passport.png')}.`,
     '17. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
     `18. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
-    '19. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '19. Scroll the passport carousel right, select id="passport-card-germany-passport", and verify "Fort Greene pub showing Germany with match audio".',
+    `20. Capture a Germany passport screenshot at ${path.join(SCREENSHOTS_DIR, '08-germany-passport.png')}.`,
+    '21. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -243,10 +247,12 @@ function appContextTool() {
         'id="passport-card-korea-passport"',
         'id="passport-card-france-passport"',
         'id="passport-card-senegal-passport"',
+        'id="passport-card-germany-passport"',
         'id="passport-detail-argentina-passport"',
         'id="passport-detail-korea-passport"',
         'id="passport-detail-france-passport"',
-        'id="passport-detail-senegal-passport"'
+        'id="passport-detail-senegal-passport"',
+        'id="passport-detail-germany-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -266,7 +272,9 @@ function appContextTool() {
         'France Midtown Bistro Plan',
         'Rockefeller broadcast plaza screen',
         'Senegal Harlem Walk',
-        'Harlem screen near the restaurant crawl'
+        'Harlem screen near the restaurant crawl',
+        'Germany Brooklyn Bierhall Plan',
+        'Fort Greene pub showing Germany with match audio'
       ],
       deterministicChecks: qaChecks,
       launchAttempts
@@ -592,6 +600,34 @@ async function runDeterministicSmoke() {
   await recordQaCheck({
     name: 'Senegal passport screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Germany',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Germany passport card visible',
+    args: ['wait', 'text', 'Germany Brooklyn Bierhall Plan', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport selectable',
+    args: ['press', 'id="passport-card-germany-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-germany-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport watch party visible',
+    args: ['wait', 'text', 'Fort Greene pub showing Germany with match audio', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '08-germany-passport.png')]
   });
 }
 

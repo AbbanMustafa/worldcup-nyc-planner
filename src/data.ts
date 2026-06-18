@@ -275,7 +275,7 @@ export const spots: Spot[] = [
     borough: 'Brooklyn',
     neighborhood: 'Fort Greene',
     coordinates: { latitude: 40.6895, longitude: -73.9724 },
-    countries: ['England', 'Ghana', 'Croatia', 'France'],
+    countries: ['England', 'Ghana', 'Croatia', 'France', 'Germany'],
     accent: '#111827',
     price: 'Bar minimums vary',
     crowd: 'Pub energy',
@@ -435,6 +435,44 @@ export const matchdayPassports: MatchdayPassport[] = [
         time: 'After match',
         title: 'Harlem walkout',
         detail: 'Keep the post-match route close to 125th for trains and backup food.'
+      }
+    ]
+  },
+  {
+    id: 'germany-passport',
+    country: 'Germany',
+    title: 'Germany Brooklyn Bierhall Plan',
+    fixture: 'Germany group-stage night',
+    hero:
+      'Warm up at a German bierhall over pretzels and a stein, then cross to a Fort Greene pub for kickoff with the Die Mannschaft crowd.',
+    neighborhood: 'Fort Greene, Brooklyn',
+    anchorSpotId: 'fort-greene',
+    watchParty: 'Fort Greene pub showing Germany with match audio',
+    cultureStop: 'Brooklyn bierhalls, pretzel counters, and a Fort Greene Park stroll',
+    foodPlan: 'Bratwurst, soft pretzel, late schnitzel stop',
+    transitPlan: 'G to Fulton or C to Lafayette Av',
+    budget: '$30-$65 before drinks',
+    color: '#DD0000',
+    stops: [
+      {
+        id: 'bierhall',
+        time: '4:30 PM',
+        title: 'Bierhall warmup',
+        detail: 'Start at a German bierhall for pretzels and a stein before the pub fills up.',
+        spotId: 'fort-greene'
+      },
+      {
+        id: 'kickoff',
+        time: '6:00 PM',
+        title: 'Pub kickoff',
+        detail: 'Claim a table at a Fort Greene pub showing Germany with match audio and a flag-heavy crowd.',
+        spotId: 'fort-greene'
+      },
+      {
+        id: 'late',
+        time: 'Post-match',
+        title: 'Late food walkout',
+        detail: 'Stay in Fort Greene for a late schnitzel or bratwurst stop and an easy G/C exit.'
       }
     ]
   }
