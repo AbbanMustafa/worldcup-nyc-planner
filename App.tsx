@@ -21,6 +21,52 @@ const ink = '#1F1F1F';
 const muted = '#717171';
 const sand = '#FFF8F3';
 
+const lightTheme = {
+  accent: airbnbRed,
+  background: sand,
+  surface: '#FFFFFF',
+  surfaceSoft: '#F7F7F7',
+  text: ink,
+  muted,
+  body: '#4E4E4E',
+  bodyMuted: '#5F5F5F',
+  border: '#ECE7E2',
+  inputBorder: '#E7E7E7',
+  iconBorder: '#EEEEEE',
+  badge: '#FFF0F3',
+  badgeText: '#B4233E',
+  mapCanvas: '#DDF3F5',
+  noteBorder: '#F0D8DE',
+  noteText: '#5F3B42',
+  shadow: '#000000',
+  statusBar: 'dark' as const,
+  placeholder: '#8A8A8A'
+};
+
+const nightTheme = {
+  accent: '#FF5A73',
+  background: '#090D18',
+  surface: '#121A2B',
+  surfaceSoft: '#1A2540',
+  text: '#F7FAFC',
+  muted: '#A8B3C7',
+  body: '#D6DEEC',
+  bodyMuted: '#C2CBDC',
+  border: '#27344F',
+  inputBorder: '#32415F',
+  iconBorder: '#34415D',
+  badge: '#341826',
+  badgeText: '#FF9AAF',
+  mapCanvas: '#142237',
+  noteBorder: '#473044',
+  noteText: '#F4CBD5',
+  shadow: '#000000',
+  statusBar: 'light' as const,
+  placeholder: '#8EA0BA'
+};
+
+type AppTheme = typeof lightTheme | typeof nightTheme;
+
 const countryFlags: Record<string, string> = {
   Algeria: '🇩🇿',
   Argentina: '🇦🇷',
@@ -69,7 +115,9 @@ const iconGlyphs = {
   people: '◎',
   ticket: '#',
   train: 'T',
-  calendar: '▦'
+  calendar: '▦',
+  moon: '☾',
+  sun: '☀'
 } as const;
 
 type AppIconName = keyof typeof iconGlyphs;
@@ -112,6 +160,8 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(spots[0].id);
   const [selectedPassportId, setSelectedPassportId] = useState(matchdayPassports[0].id);
+  const [nightMode, setNightMode] = useState(false);
+  const theme = nightMode ? nightTheme : lightTheme;
 
   const filteredSpots = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -153,40 +203,62 @@ export default function App() {
   const compact = width < 760;
 
   return (
-    <SafeAreaView style={styles.safeArea} testID="worldcup-screen">
-      <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} testID="worldcup-screen">
+      <StatusBar style={theme.statusBar} />
+      <ScrollView
+        contentContainerStyle={[styles.screen, { backgroundColor: theme.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <View style={styles.logoMark}>
             <AppIcon name="ball" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.headerCopy}>
-            <Text style={styles.kicker}>Simulator QA demo</Text>
-            <Text style={styles.title}>World Cup stays local.</Text>
+            <Text style={[styles.kicker, { color: theme.muted }]}>Simulator QA demo</Text>
+            <Text style={[styles.title, { color: theme.text }]}>World Cup stays local.</Text>
           </View>
-          <Pressable style={styles.iconButton} accessibilityLabel="Open saved plans">
-            <AppIcon name="heart" size={21} color={ink} />
+          <Pressable
+            testID="night-mode-toggle"
+            accessibilityRole="switch"
+            accessibilityLabel={nightMode ? 'Switch to day mode' : 'Switch to night mode'}
+            accessibilityState={{ checked: nightMode }}
+            onPress={() => setNightMode((current) => !current)}
+            style={[
+              styles.iconButton,
+              { backgroundColor: theme.surface, borderColor: theme.iconBorder }
+            ]}
+          >
+            <AppIcon name={nightMode ? 'sun' : 'moon'} size={21} color={theme.text} />
           </Pressable>
         </View>
 
-        <View style={styles.searchWrap}>
-          <AppIcon name="search" size={20} color={muted} />
+        <View
+          style={[
+            styles.searchWrap,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.inputBorder,
+              shadowColor: theme.shadow
+            }
+          ]}
+        >
+          <AppIcon name="search" size={20} color={theme.muted} />
           <TextInput
             testID="search-input"
             accessibilityLabel="Search teams, boroughs, vibes"
             value={query}
             onChangeText={setQuery}
             placeholder="Search teams, boroughs, vibes"
-            placeholderTextColor="#8A8A8A"
-            style={styles.searchInput}
+            placeholderTextColor={theme.placeholder}
+            style={[styles.searchInput, { color: theme.text }]}
             returnKeyType="search"
           />
           {query ? (
             <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityLabel="Clear search">
-              <AppIcon name="close" size={18} color={muted} />
+              <AppIcon name="close" size={18} color={theme.muted} />
             </Pressable>
           ) : (
-            <AppIcon name="options" size={19} color={muted} />
+            <AppIcon name="options" size={19} color={theme.muted} />
           )}
         </View>
 
@@ -205,9 +277,15 @@ export default function App() {
                 accessibilityLabel={`${filter.label} filter`}
                 accessibilityState={{ selected }}
                 onPress={() => handleFilterChange(filter.id)}
-                style={[styles.filterPill, selected && styles.filterPillActive]}
+                style={[
+                  styles.filterPill,
+                  { backgroundColor: theme.surface, borderColor: theme.inputBorder },
+                  selected && [styles.filterPillActive, { backgroundColor: theme.text, borderColor: theme.text }]
+                ]}
               >
-                <Text style={[styles.filterLabel, selected && styles.filterLabelActive]}>{filter.label}</Text>
+                <Text style={[styles.filterLabel, { color: selected ? theme.background : theme.text }]}>
+                  {filter.label}
+                </Text>
               </Pressable>
             );
           })}
@@ -218,14 +296,17 @@ export default function App() {
             spots={filteredSpots}
             selectedId={selectedSpot.id}
             onSelect={setSelectedId}
+            theme={theme}
+            nightMode={nightMode}
           />
-          <SpotDetailCard spot={selectedSpot} compact={compact} />
+          <SpotDetailCard spot={selectedSpot} compact={compact} theme={theme} />
         </View>
 
         <SectionHeader
           icon="ticket"
           title="Matchday passports"
           actionLabel={`${matchdayPassports.length} ready`}
+          theme={theme}
         />
         <FlatList
           testID="matchday-passports"
@@ -239,12 +320,18 @@ export default function App() {
               passport={item}
               selected={selectedPassport.id === item.id}
               onPress={() => handlePassportSelect(item)}
+              theme={theme}
             />
           )}
         />
-        <PassportDetailPanel passport={selectedPassport} />
+        <PassportDetailPanel passport={selectedPassport} theme={theme} />
 
-        <SectionHeader icon="calendar" title="Best upcoming pairings" actionLabel={`${matchPicks.length} picks`} />
+        <SectionHeader
+          icon="calendar"
+          title="Best upcoming pairings"
+          actionLabel={`${matchPicks.length} picks`}
+          theme={theme}
+        />
         <FlatList
           data={matchPicks}
           keyExtractor={(item) => item.id}
@@ -253,7 +340,7 @@ export default function App() {
           contentContainerStyle={styles.matchList}
           renderItem={({ item }) => (
             <Pressable
-              style={styles.matchCard}
+              style={[styles.matchCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
               accessibilityRole="button"
               accessibilityLabel={`${formatFixture(item.fixture)} at ${item.venue}`}
               onPress={() => {
@@ -265,19 +352,19 @@ export default function App() {
               }}
             >
               <View style={[styles.matchColor, { backgroundColor: item.color }]} />
-              <Text style={styles.matchDate}>{item.date} - {item.time}</Text>
-              <Text style={styles.matchFixture}>{formatFixture(item.fixture)}</Text>
-              <Text style={styles.matchMeta}>{item.venue}</Text>
+              <Text style={[styles.matchDate, { color: theme.muted }]}>{item.date} - {item.time}</Text>
+              <Text style={[styles.matchFixture, { color: theme.text }]}>{formatFixture(item.fixture)}</Text>
+              <Text style={[styles.matchMeta, { color: theme.body }]}>{item.venue}</Text>
               <View style={styles.matchFooter}>
-                <AppIcon name="map" size={16} color={airbnbRed} />
-                <Text style={styles.matchNeighborhood}>{item.neighborhoodMatch}</Text>
+                <AppIcon name="map" size={16} color={theme.accent} />
+                <Text style={[styles.matchNeighborhood, { color: theme.accent }]}>{item.neighborhoodMatch}</Text>
               </View>
-              <Text style={styles.matchReason}>{item.reason}</Text>
+              <Text style={[styles.matchReason, { color: theme.bodyMuted }]}>{item.reason}</Text>
             </Pressable>
           )}
         />
 
-        <SectionHeader icon="walk" title="Culture-first routes" actionLabel="No ticket needed" />
+        <SectionHeader icon="walk" title="Culture-first routes" actionLabel="No ticket needed" theme={theme} />
         <View style={styles.routeGrid}>
           {spots
             .filter((spot) => spot.kind === 'culture')
@@ -287,25 +374,25 @@ export default function App() {
                 testID={`route-${spot.id}`}
                 accessibilityRole="button"
                 accessibilityLabel={`${spot.name}, ${spot.neighborhood}, ${spot.borough}`}
-                style={styles.routeCard}
+                style={[styles.routeCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
                 onPress={() => {
                   setActiveFilter('culture');
                   setSelectedId(spot.id);
                 }}
               >
                 <View style={[styles.routeSwatch, { backgroundColor: spot.accent }]} />
-                <Text style={styles.routeName}>{spot.name}</Text>
-                <Text style={styles.routeMeta}>{spot.neighborhood} - {spot.borough}</Text>
-                <Text style={styles.routeCountries} numberOfLines={2}>
+                <Text style={[styles.routeName, { color: theme.text }]}>{spot.name}</Text>
+                <Text style={[styles.routeMeta, { color: theme.muted }]}>{spot.neighborhood} - {spot.borough}</Text>
+                <Text style={[styles.routeCountries, { color: theme.body }]} numberOfLines={2}>
                   {spot.countries.map(formatCountry).join(', ')}
                 </Text>
               </Pressable>
             ))}
         </View>
 
-        <View style={styles.noteBox}>
-          <AppIcon name="info" size={20} color={airbnbRed} />
-          <Text style={styles.noteText}>
+        <View style={[styles.noteBox, { backgroundColor: theme.surface, borderColor: theme.noteBorder }]}>
+          <AppIcon name="info" size={20} color={theme.accent} />
+          <Text style={[styles.noteText, { color: theme.noteText }]}>
             Seeded with public June 2026 event information and neighborhood planning ideas. Verify tickets,
             hours, capacity, and match audio before heading out.
           </Text>
@@ -318,40 +405,50 @@ export default function App() {
 function InteractiveMap({
   spots: visibleSpots,
   selectedId,
-  onSelect
+  onSelect,
+  theme,
+  nightMode
 }: {
   spots: Spot[];
   selectedId: string;
   onSelect: (spotId: string) => void;
+  theme: AppTheme;
+  nightMode: boolean;
 }) {
   return (
     <View
-      style={styles.mapShell}
+      style={[
+        styles.mapShell,
+        { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow }
+      ]}
       testID="map-shell"
       accessibilityLabel={`${visibleSpots.length} active World Cup map pins`}
     >
       <View style={styles.mapHeader}>
         <View>
-          <Text style={styles.mapTitle}>NYC culture map</Text>
-          <Text style={styles.mapSubtitle}>{visibleSpots.length} active pins</Text>
+          <Text style={[styles.mapTitle, { color: theme.text }]}>NYC culture map</Text>
+          <Text style={[styles.mapSubtitle, { color: theme.muted }]}>{visibleSpots.length} active pins</Text>
         </View>
-        <View style={styles.liveBadge}>
+        <View style={[styles.liveBadge, { backgroundColor: theme.surfaceSoft }]}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>Live plan</Text>
+          <Text style={[styles.liveText, { color: theme.text }]}>Live plan</Text>
         </View>
       </View>
 
-      <View style={styles.mapCanvas}>
-        <RealMap spots={visibleSpots} selectedId={selectedId} onSelect={onSelect} />
+      <View style={[styles.mapCanvas, { backgroundColor: theme.mapCanvas }]}>
+        <RealMap spots={visibleSpots} selectedId={selectedId} onSelect={onSelect} nightMode={nightMode} />
       </View>
     </View>
   );
 }
 
-function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
+function SpotDetailCard({ spot, compact, theme }: { spot: Spot; compact: boolean; theme: AppTheme }) {
   return (
     <View
-      style={styles.detailCard}
+      style={[
+        styles.detailCard,
+        { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow }
+      ]}
       testID="spot-detail-card"
       accessibilityLabel={`${spot.name}, ${spot.neighborhood}, ${spot.borough}`}
     >
@@ -366,36 +463,36 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
         </View>
         <View style={styles.ratingWrap}>
           <AppIcon name="star" size={14} color="#FFB400" />
-          <Text style={styles.ratingText}>Plan pick</Text>
+          <Text style={[styles.ratingText, { color: theme.text }]}>Plan pick</Text>
         </View>
       </View>
 
-      <Text style={styles.detailTitle}>{spot.name}</Text>
-      <Text style={styles.detailPlace}>{spot.neighborhood} - {spot.borough}</Text>
-      <Text style={styles.detailHeadline}>{spot.headline}</Text>
-      <Text style={styles.detailBody}>{spot.details}</Text>
+      <Text style={[styles.detailTitle, { color: theme.text }]}>{spot.name}</Text>
+      <Text style={[styles.detailPlace, { color: theme.muted }]}>{spot.neighborhood} - {spot.borough}</Text>
+      <Text style={[styles.detailHeadline, { color: theme.text }]}>{spot.headline}</Text>
+      <Text style={[styles.detailBody, { color: theme.body }]}>{spot.details}</Text>
 
       <View style={styles.factGrid}>
-        <Fact icon="time" label="Window" value={spot.nextWindow} />
-        <Fact icon="people" label="Crowd" value={spot.crowd} />
-        <Fact icon="ticket" label="Cost" value={spot.price} />
-        <Fact icon="train" label="Transit" value={spot.transit} />
+        <Fact icon="time" label="Window" value={spot.nextWindow} theme={theme} />
+        <Fact icon="people" label="Crowd" value={spot.crowd} theme={theme} />
+        <Fact icon="ticket" label="Cost" value={spot.price} theme={theme} />
+        <Fact icon="train" label="Transit" value={spot.transit} theme={theme} />
       </View>
 
-      <Text style={styles.microHeading}>Countries to follow</Text>
+      <Text style={[styles.microHeading, { color: theme.text }]}>Countries to follow</Text>
       <View style={styles.chipRow}>
         {spot.countries.map((country) => (
-          <View key={country} style={styles.countryChip}>
+          <View key={country} style={[styles.countryChip, { backgroundColor: theme.surfaceSoft }]}>
             <Text style={styles.countryFlag}>{countryFlags[country] ?? '🏳️'}</Text>
-            <Text style={styles.countryText}>{country}</Text>
+            <Text style={[styles.countryText, { color: theme.text }]}>{country}</Text>
           </View>
         ))}
       </View>
 
       <View style={[styles.tipRow, compact && styles.tipRowCompact]}>
         {spot.tips.map((tip) => (
-          <View key={tip} style={styles.tipChip}>
-            <Text style={styles.tipText}>{tip}</Text>
+          <View key={tip} style={[styles.tipChip, { backgroundColor: theme.badge }]}>
+            <Text style={[styles.tipText, { color: theme.badgeText }]}>{tip}</Text>
           </View>
         ))}
       </View>
@@ -406,11 +503,13 @@ function SpotDetailCard({ spot, compact }: { spot: Spot; compact: boolean }) {
 function PassportCard({
   passport,
   selected,
-  onPress
+  onPress,
+  theme
 }: {
   passport: MatchdayPassport;
   selected: boolean;
   onPress: () => void;
+  theme: AppTheme;
 }) {
   return (
     <Pressable
@@ -419,26 +518,35 @@ function PassportCard({
       accessibilityLabel={`${passport.title}, ${passport.neighborhood}`}
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.passportCard, selected && styles.passportCardSelected]}
+      style={[
+        styles.passportCard,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+        selected && [styles.passportCardSelected, { borderColor: theme.accent, shadowColor: theme.shadow }]
+      ]}
     >
       <View style={styles.passportTopRow}>
         <View style={[styles.passportFlagWrap, { backgroundColor: passport.color }]}>
           <Text style={styles.passportFlag}>{countryFlags[passport.country] ?? '🏳️'}</Text>
         </View>
-        <View style={styles.passportBadge}>
-          <AppIcon name="ticket" size={13} color={airbnbRed} />
-          <Text style={styles.passportBadgeText}>Passport</Text>
+        <View style={[styles.passportBadge, { backgroundColor: theme.badge }]}>
+          <AppIcon name="ticket" size={13} color={theme.accent} />
+          <Text style={[styles.passportBadgeText, { color: theme.accent }]}>Passport</Text>
         </View>
       </View>
-      <Text style={styles.passportCountry}>{formatCountry(passport.country)}</Text>
-      <Text style={styles.passportTitle}>{passport.title}</Text>
-      <Text style={styles.passportFixture}>{passport.fixture}</Text>
-      <Text style={styles.passportHero} numberOfLines={3}>
+      <Text style={[styles.passportCountry, { color: theme.muted }]}>{formatCountry(passport.country)}</Text>
+      <Text style={[styles.passportTitle, { color: theme.text }]}>{passport.title}</Text>
+      <Text style={[styles.passportFixture, { color: theme.accent }]}>{passport.fixture}</Text>
+      <Text style={[styles.passportHero, { color: theme.body }]} numberOfLines={3}>
         {passport.hero}
       </Text>
       <View style={styles.passportFooter}>
-        <AppIcon name="map" size={15} color={selected ? airbnbRed : muted} />
-        <Text style={[styles.passportNeighborhood, selected && styles.passportNeighborhoodSelected]}>
+        <AppIcon name="map" size={15} color={selected ? theme.accent : theme.muted} />
+        <Text
+          style={[
+            styles.passportNeighborhood,
+            { color: selected ? theme.accent : theme.muted }
+          ]}
+        >
           {passport.neighborhood}
         </Text>
       </View>
@@ -446,35 +554,35 @@ function PassportCard({
   );
 }
 
-function PassportDetailPanel({ passport }: { passport: MatchdayPassport }) {
+function PassportDetailPanel({ passport, theme }: { passport: MatchdayPassport; theme: AppTheme }) {
   return (
     <View
       testID={`passport-detail-${passport.id}`}
       accessibilityLabel={`${passport.title} itinerary`}
-      style={styles.passportPanel}
+      style={[styles.passportPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}
     >
       <View style={styles.passportPanelHeader}>
         <View style={[styles.passportPanelMark, { backgroundColor: passport.color }]}>
           <Text style={styles.passportPanelFlag}>{countryFlags[passport.country] ?? '🏳️'}</Text>
         </View>
         <View style={styles.passportPanelCopy}>
-          <Text style={styles.passportPanelEyebrow}>Selected passport</Text>
-          <Text style={styles.passportPanelTitle}>{passport.title}</Text>
+          <Text style={[styles.passportPanelEyebrow, { color: theme.muted }]}>Selected passport</Text>
+          <Text style={[styles.passportPanelTitle, { color: theme.text }]}>{passport.title}</Text>
         </View>
       </View>
 
-      <Text style={styles.passportPanelSummary}>{passport.hero}</Text>
+      <Text style={[styles.passportPanelSummary, { color: theme.body }]}>{passport.hero}</Text>
 
       <View style={styles.passportPlanGrid}>
-        <PassportFact label="Watch" value={passport.watchParty} />
-        <PassportFact label="Eat" value={passport.foodPlan} />
-        <PassportFact label="Explore" value={passport.cultureStop} />
-        <PassportFact label="Transit" value={passport.transitPlan} />
+        <PassportFact label="Watch" value={passport.watchParty} theme={theme} />
+        <PassportFact label="Eat" value={passport.foodPlan} theme={theme} />
+        <PassportFact label="Explore" value={passport.cultureStop} theme={theme} />
+        <PassportFact label="Transit" value={passport.transitPlan} theme={theme} />
       </View>
 
-      <View style={styles.passportBudgetRow}>
-        <AppIcon name="ticket" size={16} color={airbnbRed} />
-        <Text style={styles.passportBudgetText}>{passport.budget}</Text>
+      <View style={[styles.passportBudgetRow, { backgroundColor: theme.badge }]}>
+        <AppIcon name="ticket" size={16} color={theme.accent} />
+        <Text style={[styles.passportBudgetText, { color: theme.badgeText }]}>{passport.budget}</Text>
       </View>
 
       <View style={styles.passportTimeline}>
@@ -485,12 +593,12 @@ function PassportDetailPanel({ passport }: { passport: MatchdayPassport }) {
             style={styles.passportStop}
           >
             <View style={styles.passportStopRail}>
-              <View style={[styles.passportStopDot, { backgroundColor: passport.color }]} />
+              <View style={[styles.passportStopDot, { backgroundColor: passport.color, borderColor: theme.surface }]} />
             </View>
             <View style={styles.passportStopContent}>
-              <Text style={styles.passportStopTime}>{stop.time}</Text>
-              <Text style={styles.passportStopTitle}>{stop.title}</Text>
-              <Text style={styles.passportStopDetail}>{stop.detail}</Text>
+              <Text style={[styles.passportStopTime, { color: theme.muted }]}>{stop.time}</Text>
+              <Text style={[styles.passportStopTitle, { color: theme.text }]}>{stop.title}</Text>
+              <Text style={[styles.passportStopDetail, { color: theme.bodyMuted }]}>{stop.detail}</Text>
             </View>
           </View>
         ))}
@@ -499,21 +607,21 @@ function PassportDetailPanel({ passport }: { passport: MatchdayPassport }) {
   );
 }
 
-function PassportFact({ label, value }: { label: string; value: string }) {
+function PassportFact({ label, value, theme }: { label: string; value: string; theme: AppTheme }) {
   return (
-    <View style={styles.passportFact}>
-      <Text style={styles.passportFactLabel}>{label}</Text>
-      <Text style={styles.passportFactValue}>{value}</Text>
+    <View style={[styles.passportFact, { backgroundColor: theme.surfaceSoft }]}>
+      <Text style={[styles.passportFactLabel, { color: theme.muted }]}>{label}</Text>
+      <Text style={[styles.passportFactValue, { color: theme.text }]}>{value}</Text>
     </View>
   );
 }
 
-function Fact({ icon, label, value }: { icon: AppIconName; label: string; value: string }) {
+function Fact({ icon, label, value, theme }: { icon: AppIconName; label: string; value: string; theme: AppTheme }) {
   return (
-    <View style={styles.fact}>
-      <AppIcon name={icon} size={16} color={airbnbRed} />
-      <Text style={styles.factLabel}>{label}</Text>
-      <Text style={styles.factValue}>{value}</Text>
+    <View style={[styles.fact, { backgroundColor: theme.surfaceSoft }]}>
+      <AppIcon name={icon} size={16} color={theme.accent} />
+      <Text style={[styles.factLabel, { color: theme.muted }]}>{label}</Text>
+      <Text style={[styles.factValue, { color: theme.text }]}>{value}</Text>
     </View>
   );
 }
@@ -521,19 +629,21 @@ function Fact({ icon, label, value }: { icon: AppIconName; label: string; value:
 function SectionHeader({
   icon,
   title,
-  actionLabel
+  actionLabel,
+  theme
 }: {
   icon: AppIconName;
   title: string;
   actionLabel: string;
+  theme: AppTheme;
 }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionTitleWrap}>
-        <AppIcon name={icon} size={20} color={ink} />
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <AppIcon name={icon} size={20} color={theme.text} />
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
       </View>
-      <Text style={styles.sectionAction}>{actionLabel}</Text>
+      <Text style={[styles.sectionAction, { color: theme.accent }]}>{actionLabel}</Text>
     </View>
   );
 }

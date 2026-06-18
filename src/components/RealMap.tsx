@@ -8,6 +8,7 @@ type RealMapProps = {
   spots: Spot[];
   selectedId: string;
   onSelect: (spotId: string) => void;
+  nightMode?: boolean;
 };
 
 type Tile = {
@@ -55,7 +56,7 @@ const tileBounds = {
 
 const tiles = buildTiles();
 
-export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
+export default function RealMap({ spots, selectedId, onSelect, nightMode = false }: RealMapProps) {
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [viewport, setViewport] = useState<Viewport>({ scale: minZoom, translateX: 0, translateY: 0 });
   const viewportRef = useRef(viewport);
@@ -199,15 +200,15 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
             ))}
           </View>
 
-          <View style={styles.mapTint} pointerEvents="none" />
+          <View style={[styles.mapTint, nightMode && styles.mapTintNight]} pointerEvents="none" />
           <View style={styles.boroughLabelQueens} pointerEvents="none">
-            <Text style={styles.boroughText}>QUEENS</Text>
+            <Text style={[styles.boroughText, nightMode && styles.boroughTextNight]}>QUEENS</Text>
           </View>
           <View style={styles.boroughLabelBrooklyn} pointerEvents="none">
-            <Text style={styles.boroughText}>BROOKLYN</Text>
+            <Text style={[styles.boroughText, nightMode && styles.boroughTextNight]}>BROOKLYN</Text>
           </View>
           <View style={styles.boroughLabelManhattan} pointerEvents="none">
-            <Text style={styles.boroughText}>MANHATTAN</Text>
+            <Text style={[styles.boroughText, nightMode && styles.boroughTextNight]}>MANHATTAN</Text>
           </View>
         </View>
       </View>
@@ -234,11 +235,25 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
                 selected && styles.pinWrapSelected
               ]}
             >
-              <View style={[styles.pin, { backgroundColor: spot.accent }, selected && styles.pinSelected]}>
+              <View
+                style={[
+                  styles.pin,
+                  nightMode && styles.pinNight,
+                  { backgroundColor: spot.accent },
+                  selected && styles.pinSelected
+                ]}
+              >
                 <Text style={styles.pinText}>{spot.countries[0]?.slice(0, 2).toUpperCase() ?? 'WC'}</Text>
               </View>
-              <View style={[styles.pinLabel, selected && styles.pinLabelSelected]}>
-                <Text style={[styles.pinLabelText, selected && styles.pinLabelTextSelected]} numberOfLines={1}>
+              <View style={[styles.pinLabel, nightMode && styles.pinLabelNight, selected && styles.pinLabelSelected]}>
+                <Text
+                  style={[
+                    styles.pinLabelText,
+                    nightMode && styles.pinLabelTextNight,
+                    selected && styles.pinLabelTextSelected
+                  ]}
+                  numberOfLines={1}
+                >
                   {spot.neighborhood}
                 </Text>
               </View>
@@ -247,7 +262,7 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
         })}
       </View>
 
-      <View style={styles.zoomControls}>
+      <View style={[styles.zoomControls, nightMode && styles.zoomControlsNight]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Zoom map in"
@@ -255,9 +270,9 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
           onPress={() => adjustZoom(zoomStep)}
           style={styles.zoomButton}
         >
-          <Text style={styles.zoomButtonText}>+</Text>
+          <Text style={[styles.zoomButtonText, nightMode && styles.zoomButtonTextNight]}>+</Text>
         </Pressable>
-        <View style={styles.zoomDivider} />
+        <View style={[styles.zoomDivider, nightMode && styles.zoomDividerNight]} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Zoom map out"
@@ -265,12 +280,12 @@ export default function RealMap({ spots, selectedId, onSelect }: RealMapProps) {
           onPress={() => adjustZoom(-zoomStep)}
           style={styles.zoomButton}
         >
-          <Text style={styles.zoomButtonText}>-</Text>
+          <Text style={[styles.zoomButtonText, nightMode && styles.zoomButtonTextNight]}>-</Text>
         </Pressable>
       </View>
 
-      <View style={styles.attribution} pointerEvents="none">
-        <Text style={styles.attributionText}>OpenStreetMap</Text>
+      <View style={[styles.attribution, nightMode && styles.attributionNight]} pointerEvents="none">
+        <Text style={[styles.attributionText, nightMode && styles.attributionTextNight]}>OpenStreetMap</Text>
       </View>
     </View>
   );
@@ -408,6 +423,9 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255, 248, 243, 0.08)'
   },
+  mapTintNight: {
+    backgroundColor: 'rgba(5, 12, 26, 0.48)'
+  },
   boroughLabelQueens: {
     position: 'absolute',
     top: '34%',
@@ -429,6 +447,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 0
+  },
+  boroughTextNight: {
+    color: 'rgba(235, 242, 255, 0.44)'
   },
   pinWrap: {
     position: 'absolute',
@@ -453,6 +474,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4
   },
+  pinNight: {
+    borderColor: '#EAF1FF'
+  },
   pinSelected: {
     width: 42,
     height: 42,
@@ -476,6 +500,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(31, 31, 31, 0.08)'
   },
+  pinLabelNight: {
+    backgroundColor: 'rgba(9, 13, 24, 0.86)',
+    borderColor: 'rgba(247, 250, 252, 0.18)'
+  },
   pinLabelSelected: {
     backgroundColor: '#1F1F1F',
     borderColor: '#1F1F1F'
@@ -484,6 +512,9 @@ const styles = StyleSheet.create({
     color: '#1F1F1F',
     fontSize: 11,
     fontWeight: '800'
+  },
+  pinLabelTextNight: {
+    color: '#F7FAFC'
   },
   pinLabelTextSelected: {
     color: '#FFFFFF'
@@ -498,10 +529,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.82)'
   },
+  attributionNight: {
+    backgroundColor: 'rgba(9, 13, 24, 0.78)'
+  },
   attributionText: {
     color: '#4E4E4E',
     fontSize: 10,
     fontWeight: '700'
+  },
+  attributionTextNight: {
+    color: '#D6DEEC'
   },
   zoomControls: {
     position: 'absolute',
@@ -519,6 +556,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3
   },
+  zoomControlsNight: {
+    backgroundColor: 'rgba(9, 13, 24, 0.9)',
+    borderColor: 'rgba(247, 250, 252, 0.18)'
+  },
   zoomButton: {
     width: 34,
     height: 34,
@@ -531,8 +572,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 24
   },
+  zoomButtonTextNight: {
+    color: '#F7FAFC'
+  },
   zoomDivider: {
     height: 1,
     backgroundColor: 'rgba(31, 31, 31, 0.1)'
+  },
+  zoomDividerNight: {
+    backgroundColor: 'rgba(247, 250, 252, 0.18)'
   }
 });
