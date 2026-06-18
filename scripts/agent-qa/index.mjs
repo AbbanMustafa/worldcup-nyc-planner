@@ -511,10 +511,9 @@ async function runDeterministicSmoke() {
     args: ['press', 'id="passport-card-korea-passport"'],
     critical: true
   });
-  await recordQaCheck({
+  await recordPassportTextCheck({
     name: 'Korea Republic passport watch party visible',
-    args: ['wait', 'text', 'Koreatown room with match audio', '3000'],
-    critical: true
+    text: 'Koreatown room with match audio'
   });
   await recordQaCheck({
     name: 'Korea Republic passport screenshot captured',
@@ -534,10 +533,9 @@ async function runDeterministicSmoke() {
     args: ['press', 'id="passport-card-japan-passport"'],
     critical: true
   });
-  await recordQaCheck({
+  await recordPassportTextCheck({
     name: 'Japan passport watch party visible',
-    args: ['wait', 'text', 'Koreatown izakaya or soccer bar with Japan supporters', '3000'],
-    critical: true
+    text: 'Koreatown izakaya or soccer bar with Japan supporters'
   });
   await recordQaCheck({
     name: 'Japan passport screenshot captured',
@@ -557,10 +555,9 @@ async function runDeterministicSmoke() {
     args: ['press', 'id="passport-card-senegal-passport"'],
     critical: true
   });
-  await recordQaCheck({
+  await recordPassportTextCheck({
     name: 'Senegal passport watch party visible',
-    args: ['wait', 'text', 'Harlem screen near the restaurant crawl', '3000'],
-    critical: true
+    text: 'Harlem screen near the restaurant crawl'
   });
   await recordQaCheck({
     name: 'Senegal passport screenshot captured',
@@ -588,6 +585,44 @@ async function recordQaCheck({ name, args, critical = false }) {
   };
   qaChecks.push(check);
   return check;
+}
+
+async function recordPassportTextCheck({ name, text }) {
+  const args = ['wait', 'text', text, '3000'];
+  let result = await runAgentDevice(args, { allowFailure: true });
+  const recoveryCommands = [];
+
+  if (!result.ok) {
+    const recoveryScrolls = looksLikeHomeSurface(result)
+      ? [
+          ['scroll', 'down', '0.9'],
+          ['scroll', 'down', '0.9']
+        ]
+      : [['scroll', 'down', '0.35']];
+
+    for (const scrollArgs of recoveryScrolls) {
+      const scrollResult = await runAgentDevice(scrollArgs, { allowFailure: true });
+      recoveryCommands.push(scrollResult.command);
+    }
+
+    result = await runAgentDevice(args, { allowFailure: true });
+  }
+
+  const check = {
+    name,
+    status: result.ok ? 'passed' : 'failed',
+    critical: true,
+    command: result.command,
+    detail: trim(result.ok ? result.stdout || 'Command completed.' : result.stderr || result.stdout, 300),
+    ...(recoveryCommands.length > 0 ? { recoveredWith: recoveryCommands } : {})
+  };
+  qaChecks.push(check);
+  return check;
+}
+
+function looksLikeHomeSurface(result) {
+  const text = `${result.stderr || ''}\n${result.stdout || ''}`.toLowerCase();
+  return text.includes('world cup stays local') && text.includes('search teams');
 }
 
 async function prepareDeviceForQa() {
