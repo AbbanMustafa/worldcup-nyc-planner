@@ -104,7 +104,7 @@ export const spots: Spot[] = [
     borough: 'Manhattan',
     neighborhood: 'Rockefeller Center',
     coordinates: { latitude: 40.7587, longitude: -73.9787 },
-    countries: ['Mexico', 'Argentina', 'Colombia', 'Uruguay', 'Spain'],
+    countries: ['Mexico', 'Argentina', 'Colombia', 'Uruguay', 'Spain', 'France'],
     accent: '#FC642D',
     price: 'Free plaza events',
     crowd: 'Broadcast plaza',
@@ -361,6 +361,44 @@ export const matchdayPassports: MatchdayPassport[] = [
         time: 'After final whistle',
         title: 'Late-night second stop',
         detail: 'Use bakeries, dessert, or karaoke as the post-match fallback.'
+      }
+    ]
+  },
+  {
+    id: 'france-passport',
+    country: 'France',
+    title: 'France Midtown Bistro Plan',
+    fixture: 'France group-stage night',
+    hero:
+      'Anchor the night around an early Midtown bistro dinner, then cross to the Rockefeller broadcast plaza for kickoff with les Bleus fans.',
+    neighborhood: 'Rockefeller Center, Manhattan',
+    anchorSpotId: 'rockefeller',
+    watchParty: 'Rockefeller broadcast plaza screen',
+    cultureStop: 'Midtown French bistros, patisseries, and a Bryant Park stroll',
+    foodPlan: 'Steak frites, baguette sandwich, late crepe stop',
+    transitPlan: 'B/D/F/M to 47-50 Sts-Rockefeller Ctr',
+    budget: '$35-$75 before drinks',
+    color: '#0055A4',
+    stops: [
+      {
+        id: 'bistro',
+        time: '5:00 PM',
+        title: 'Bistro dinner',
+        detail: 'Book an early Midtown bistro table for steak frites before the plaza fills up.',
+        spotId: 'rockefeller'
+      },
+      {
+        id: 'plaza',
+        time: '6:30 PM',
+        title: 'Plaza kickoff',
+        detail: 'Walk to the Rockefeller broadcast plaza and stake out a screen with the French crowd.',
+        spotId: 'rockefeller'
+      },
+      {
+        id: 'dessert',
+        time: 'Post-match',
+        title: 'Patisserie walkout',
+        detail: 'Close with a crepe or patisserie stop and an easy B/D/F/M exit.'
       }
     ]
   },
