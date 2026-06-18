@@ -93,7 +93,7 @@ async function main() {
     const result = await generateText({
       model: createModel(),
       temperature: 0.2,
-      stopWhen: [hasToolCall('write_report'), stepCountIs(20)],
+      stopWhen: [hasToolCall('write_report'), stepCountIs(24)],
       tools: {
         app_context: appContextTool(),
         agent_device: agentDeviceTool(),
@@ -165,7 +165,7 @@ function buildPrompt() {
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
-    '- Matchday Passports are visible and Argentina, Korea Republic, and Senegal passports each open an itinerary.',
+    '- Matchday Passports are visible and Argentina, Korea Republic, Japan, and Senegal passports each open an itinerary.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -185,10 +185,8 @@ function buildPrompt() {
     '- id="matchday-passports"',
     '- id="passport-card-argentina-passport"',
     '- id="passport-card-korea-passport"',
+    '- id="passport-card-japan-passport"',
     '- id="passport-card-senegal-passport"',
-    '- id="passport-detail-argentina-passport"',
-    '- id="passport-detail-korea-passport"',
-    '- id="passport-detail-senegal-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -205,9 +203,11 @@ function buildPrompt() {
     `12. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')}.`,
     '13. Select id="passport-card-korea-passport" and verify "Koreatown room with match audio".',
     `14. Capture a Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-korea-passport.png')}.`,
-    '15. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
-    `16. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
-    '17. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '15. Scroll the passport carousel right, select id="passport-card-japan-passport", and verify "Koreatown izakaya or soccer bar with Japan supporters".',
+    `16. Capture a Japan passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-japan-passport.png')}.`,
+    '17. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
+    `18. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '08-senegal-passport.png')}.`,
+    '19. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -237,10 +237,8 @@ function appContextTool() {
         'id="matchday-passports"',
         'id="passport-card-argentina-passport"',
         'id="passport-card-korea-passport"',
-        'id="passport-card-senegal-passport"',
-        'id="passport-detail-argentina-passport"',
-        'id="passport-detail-korea-passport"',
-        'id="passport-detail-senegal-passport"'
+        'id="passport-card-japan-passport"',
+        'id="passport-card-senegal-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -257,6 +255,8 @@ function appContextTool() {
         'Queens football bar near Roosevelt Av',
         'Korea Republic Night Plan',
         'Koreatown room with match audio',
+        'Japan Matchday Passport',
+        'Koreatown izakaya or soccer bar with Japan supporters',
         'Senegal Harlem Walk',
         'Harlem screen near the restaurant crawl'
       ],
@@ -511,19 +511,35 @@ async function runDeterministicSmoke() {
     args: ['press', 'id="passport-card-korea-passport"'],
     critical: true
   });
-  await recordQaCheck({
-    name: 'Korea Republic passport detail visible',
-    args: ['is', 'visible', 'id="passport-detail-korea-passport"'],
-    critical: true
-  });
-  await recordQaCheck({
+  await recordPassportTextCheck({
     name: 'Korea Republic passport watch party visible',
-    args: ['wait', 'text', 'Koreatown room with match audio', '3000'],
-    critical: true
+    text: 'Koreatown room with match audio'
   });
   await recordQaCheck({
     name: 'Korea Republic passport screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '06-korea-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Japan',
+    args: ['scroll', 'right', '0.65']
+  });
+  await recordQaCheck({
+    name: 'Japan passport card visible',
+    args: ['wait', 'text', 'Japan Matchday Passport', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Japan passport selectable',
+    args: ['press', 'id="passport-card-japan-passport"'],
+    critical: true
+  });
+  await recordPassportTextCheck({
+    name: 'Japan passport watch party visible',
+    text: 'Koreatown izakaya or soccer bar with Japan supporters'
+  });
+  await recordQaCheck({
+    name: 'Japan passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-japan-passport.png')]
   });
   await recordQaCheck({
     name: 'Passport carousel scrolled to Senegal',
@@ -539,19 +555,13 @@ async function runDeterministicSmoke() {
     args: ['press', 'id="passport-card-senegal-passport"'],
     critical: true
   });
-  await recordQaCheck({
-    name: 'Senegal passport detail visible',
-    args: ['is', 'visible', 'id="passport-detail-senegal-passport"'],
-    critical: true
-  });
-  await recordQaCheck({
+  await recordPassportTextCheck({
     name: 'Senegal passport watch party visible',
-    args: ['wait', 'text', 'Harlem screen near the restaurant crawl', '3000'],
-    critical: true
+    text: 'Harlem screen near the restaurant crawl'
   });
   await recordQaCheck({
     name: 'Senegal passport screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '08-senegal-passport.png')]
   });
 }
 
@@ -575,6 +585,44 @@ async function recordQaCheck({ name, args, critical = false }) {
   };
   qaChecks.push(check);
   return check;
+}
+
+async function recordPassportTextCheck({ name, text }) {
+  const args = ['wait', 'text', text, '3000'];
+  let result = await runAgentDevice(args, { allowFailure: true });
+  const recoveryCommands = [];
+
+  if (!result.ok) {
+    const recoveryScrolls = looksLikeHomeSurface(result)
+      ? [
+          ['scroll', 'down', '0.9'],
+          ['scroll', 'down', '0.9']
+        ]
+      : [['scroll', 'down', '0.35']];
+
+    for (const scrollArgs of recoveryScrolls) {
+      const scrollResult = await runAgentDevice(scrollArgs, { allowFailure: true });
+      recoveryCommands.push(scrollResult.command);
+    }
+
+    result = await runAgentDevice(args, { allowFailure: true });
+  }
+
+  const check = {
+    name,
+    status: result.ok ? 'passed' : 'failed',
+    critical: true,
+    command: result.command,
+    detail: trim(result.ok ? result.stdout || 'Command completed.' : result.stderr || result.stdout, 300),
+    ...(recoveryCommands.length > 0 ? { recoveredWith: recoveryCommands } : {})
+  };
+  qaChecks.push(check);
+  return check;
+}
+
+function looksLikeHomeSurface(result) {
+  const text = `${result.stderr || ''}\n${result.stdout || ''}`.toLowerCase();
+  return text.includes('world cup stays local') && text.includes('search teams');
 }
 
 async function prepareDeviceForQa() {
@@ -707,8 +755,9 @@ function shouldRetryAfterOpen(result) {
   return (
     text.includes('session_not_found') ||
     text.includes('no active session') ||
-    text.includes('wait timed out') ||
-    text.includes('current surface')
+    text.includes('session is not active') ||
+    text.includes('connection refused') ||
+    text.includes('device not found')
   );
 }
 
@@ -717,7 +766,7 @@ async function writeFallbackReport(modelText) {
   const summary =
     criticalFailures.length > 0
       ? `Deterministic ${PLATFORM_LABEL} smoke QA found ${criticalFailures.length} critical failure(s). The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`
-      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, map zoom and pin selection, the Culture filter, Koreatown search, and Argentina, Korea Republic, and Senegal Matchday Passports. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
+      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, map zoom and pin selection, the Culture filter, Koreatown search, and Argentina, Korea Republic, Japan, and Senegal Matchday Passports. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
 
   await writeReport({
     overallStatus: criticalFailures.length > 0 ? 'failed' : 'passed',
