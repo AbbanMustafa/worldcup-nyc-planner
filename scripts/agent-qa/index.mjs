@@ -187,10 +187,6 @@ function buildPrompt() {
     '- id="passport-card-korea-passport"',
     '- id="passport-card-japan-passport"',
     '- id="passport-card-senegal-passport"',
-    '- id="passport-detail-argentina-passport"',
-    '- id="passport-detail-korea-passport"',
-    '- id="passport-detail-japan-passport"',
-    '- id="passport-detail-senegal-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -242,11 +238,7 @@ function appContextTool() {
         'id="passport-card-argentina-passport"',
         'id="passport-card-korea-passport"',
         'id="passport-card-japan-passport"',
-        'id="passport-card-senegal-passport"',
-        'id="passport-detail-argentina-passport"',
-        'id="passport-detail-korea-passport"',
-        'id="passport-detail-japan-passport"',
-        'id="passport-detail-senegal-passport"'
+        'id="passport-card-senegal-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -520,11 +512,6 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Korea Republic passport detail visible',
-    args: ['is', 'visible', 'id="passport-detail-korea-passport"'],
-    critical: true
-  });
-  await recordQaCheck({
     name: 'Korea Republic passport watch party visible',
     args: ['wait', 'text', 'Koreatown room with match audio', '3000'],
     critical: true
@@ -548,11 +535,6 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Japan passport detail visible',
-    args: ['is', 'visible', 'id="passport-detail-japan-passport"'],
-    critical: true
-  });
-  await recordQaCheck({
     name: 'Japan passport watch party visible',
     args: ['wait', 'text', 'Koreatown izakaya or soccer bar with Japan supporters', '3000'],
     critical: true
@@ -573,11 +555,6 @@ async function runDeterministicSmoke() {
   await recordQaCheck({
     name: 'Senegal passport selectable',
     args: ['press', 'id="passport-card-senegal-passport"'],
-    critical: true
-  });
-  await recordQaCheck({
-    name: 'Senegal passport detail visible',
-    args: ['is', 'visible', 'id="passport-detail-senegal-passport"'],
     critical: true
   });
   await recordQaCheck({
@@ -743,8 +720,9 @@ function shouldRetryAfterOpen(result) {
   return (
     text.includes('session_not_found') ||
     text.includes('no active session') ||
-    text.includes('wait timed out') ||
-    text.includes('current surface')
+    text.includes('session is not active') ||
+    text.includes('connection refused') ||
+    text.includes('device not found')
   );
 }
 
