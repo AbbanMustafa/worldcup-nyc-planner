@@ -185,9 +185,13 @@ if (!screenshots.length) {
   process.exit(0);
 }
 
+const isLaunchAttemptScreenshot = (screenshot) =>
+  /^\d+-after-open\.(png|jpe?g)$/i.test(String(screenshot.fileName || ''));
+const evidenceScreenshots = screenshots.filter((screenshot) => !isLaunchAttemptScreenshot(screenshot));
+const previewScreenshots = evidenceScreenshots.length ? evidenceScreenshots : screenshots;
 const baseUrl = `https://github.com/${repository}/raw/${encodeURIComponent(branch)}/${encodePath(destinationPrefix)}`;
 process.stdout.write(
-  screenshots
+  previewScreenshots
     .slice(0, 5)
     .map((screenshot) => {
       const label = escapeHtml(screenshot.label || screenshot.fileName);
