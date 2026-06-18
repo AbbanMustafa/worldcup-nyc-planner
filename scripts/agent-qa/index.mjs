@@ -160,6 +160,7 @@ function buildPrompt() {
     '- The app launches to "World Cup stays local." without a redbox/logbox overlay.',
     '- The search field is visible and usable.',
     '- The real NYC map is visible and not blank; OpenStreetMap raster tiles or native map UI should be present.',
+    '- Night mode can be enabled, stays enabled for screenshots, and keeps map/passport text readable.',
     '- The map can be zoomed and pins can be selected without marker sizing or selection regressions.',
     '- Pins and labels update when filters change.',
     '- The Culture filter can be selected and shows culture-first route content.',
@@ -169,6 +170,7 @@ function buildPrompt() {
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
+    '- id="night-mode-toggle"',
     '- id="search-input"',
     '- id="filter-all"',
     '- id="filter-watch"',
@@ -194,20 +196,22 @@ function buildPrompt() {
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
     '2. Use agent_device with ["react-native", "dismiss-overlay"] if a React Native overlay appears.',
     '3. Use agent_device with ["appstate"], then ["snapshot", "-i"].',
-    `4. Capture a home screenshot at ${path.join(SCREENSHOTS_DIR, '01-home.png')}.`,
-    '5. Press id="map-zoom-in", then select id="map-pin-koreatown", id="map-pin-jackson-heights", and id="map-pin-astoria".',
-    `6. Capture a zoomed map and pin-selection screenshot at ${path.join(SCREENSHOTS_DIR, '02-map-pins.png')}.`,
-    '7. Press id="filter-culture"; verify "Culture" content, route cards, and the active pin count.',
-    `8. Capture a culture screenshot at ${path.join(SCREENSHOTS_DIR, '03-culture.png')}.`,
-    '9. Fill id="search-input" with "Koreatown"; verify the Koreatown card and Korea Republic country chip.',
-    `10. Capture a search screenshot at ${path.join(SCREENSHOTS_DIR, '04-search-koreatown.png')}.`,
-    '11. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
-    `12. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')}.`,
-    '13. Select id="passport-card-korea-passport" and verify "Koreatown room with match audio".',
-    `14. Capture a Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-korea-passport.png')}.`,
-    '15. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
-    `16. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
-    '17. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '4. Press id="night-mode-toggle"; verify "Switch to day mode"; keep night mode enabled for every screenshot.',
+    `5. Capture a night-mode home screenshot at ${path.join(SCREENSHOTS_DIR, '01-night-home.png')}.`,
+    '6. Press id="map-zoom-in", then select id="map-pin-koreatown", id="map-pin-jackson-heights", and id="map-pin-astoria".',
+    `7. Capture a night-mode zoomed map and pin-selection screenshot at ${path.join(SCREENSHOTS_DIR, '02-night-map-pins.png')}.`,
+    '8. Press id="filter-culture"; verify "Culture" content, route cards, and the active pin count.',
+    `9. Capture a night-mode culture screenshot at ${path.join(SCREENSHOTS_DIR, '03-night-culture.png')}.`,
+    '10. Fill id="search-input" with "Koreatown"; verify the Koreatown card and Korea Republic country chip.',
+    `11. Capture a night-mode search screenshot at ${path.join(SCREENSHOTS_DIR, '04-night-search-koreatown.png')}.`,
+    '12. Relaunching the app resets local UI state, so enable night mode again before passport screenshots if needed.',
+    '13. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
+    `14. Capture a night-mode Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '05-night-argentina-passport.png')}.`,
+    '15. Select id="passport-card-korea-passport" and verify "Koreatown room with match audio".',
+    `16. Capture a night-mode Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-night-korea-passport.png')}.`,
+    '17. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
+    `18. Capture a night-mode Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-night-senegal-passport.png')}.`,
+    '19. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -225,6 +229,7 @@ function appContextTool() {
       recordingsDirectory: RECORDINGS_DIR,
       selectors: [
         'id="worldcup-screen"',
+        'id="night-mode-toggle"',
         'id="search-input"',
         'id="filter-culture"',
         'id="map-shell"',
@@ -245,6 +250,8 @@ function appContextTool() {
       expectedText: [
         'World Cup stays local.',
         'Simulator QA demo',
+        'Switch to night mode',
+        'Switch to day mode',
         'NYC culture map',
         'Koreatown Red Devils Stop',
         'Jackson Heights Nations Loop',
@@ -271,7 +278,7 @@ function agentDeviceTool() {
     description: [
       'Run an agent-device command against the active simulator/emulator.',
       'Pass argv as an array, for example ["snapshot", "-i"], ["press", "id=\\"filter-culture\\""],',
-      `or ["screenshot", "${path.join(SCREENSHOTS_DIR, '01-home.png')}"].`
+      `or ["screenshot", "${path.join(SCREENSHOTS_DIR, '01-night-home.png')}"].`
     ].join(' '),
     inputSchema: z.object({
       args: z.array(z.string()).min(1).describe('Arguments passed after the agent-device binary.')
@@ -400,9 +407,10 @@ async function runDeterministicSmoke() {
     args: ['is', 'visible', 'id="map-zoom-in"'],
     critical: true
   });
+  await enableNightModeForScreenshots('Initial screenshot pass');
   await recordQaCheck({
-    name: 'Home screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '01-home.png')]
+    name: 'Night-mode home screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '01-night-home.png')]
   });
   await recordQaCheck({
     name: 'Map zoom interaction works',
@@ -440,8 +448,8 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Zoomed map pin screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '02-map-pins.png')]
+    name: 'Night-mode zoomed map pin screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '02-night-map-pins.png')]
   });
   await recordQaCheck({
     name: 'Culture filter selectable',
@@ -454,8 +462,8 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Culture screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '03-culture.png')]
+    name: 'Night-mode culture screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '03-night-culture.png')]
   });
   await recordQaCheck({
     name: 'Koreatown search can be entered',
@@ -468,14 +476,15 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Koreatown search screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '04-search-koreatown.png')]
+    name: 'Night-mode Koreatown search screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '04-night-search-koreatown.png')]
   });
 
   await runAgentDevice(['keyboard', 'dismiss'], { allowFailure: true });
   if (context.applicationId) {
     await runAgentDevice(['open', context.applicationId, '--relaunch'], { allowFailure: true });
     await runAgentDevice(['wait', '1000'], { allowFailure: true });
+    await enableNightModeForScreenshots('Passport screenshot pass');
   }
 
   await recordQaCheck({
@@ -503,8 +512,8 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Argentina passport screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')]
+    name: 'Night-mode Argentina passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '05-night-argentina-passport.png')]
   });
   await recordQaCheck({
     name: 'Korea Republic passport selectable',
@@ -522,8 +531,8 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Korea Republic passport screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '06-korea-passport.png')]
+    name: 'Night-mode Korea Republic passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '06-night-korea-passport.png')]
   });
   await recordQaCheck({
     name: 'Passport carousel scrolled to Senegal',
@@ -550,8 +559,26 @@ async function runDeterministicSmoke() {
     critical: true
   });
   await recordQaCheck({
-    name: 'Senegal passport screenshot captured',
-    args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
+    name: 'Night-mode Senegal passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-night-senegal-passport.png')]
+  });
+}
+
+async function enableNightModeForScreenshots(scope) {
+  await recordQaCheck({
+    name: `${scope} night-mode toggle visible`,
+    args: ['is', 'visible', 'id="night-mode-toggle"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: `${scope} night mode enabled`,
+    args: ['press', 'id="night-mode-toggle"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: `${scope} night-mode state confirmed`,
+    args: ['wait', 'text', 'Switch to day mode', '3000'],
+    critical: true
   });
 }
 
@@ -717,7 +744,7 @@ async function writeFallbackReport(modelText) {
   const summary =
     criticalFailures.length > 0
       ? `Deterministic ${PLATFORM_LABEL} smoke QA found ${criticalFailures.length} critical failure(s). The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`
-      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, map zoom and pin selection, the Culture filter, Koreatown search, and Argentina, Korea Republic, and Senegal Matchday Passports. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
+      : `Deterministic ${PLATFORM_LABEL} smoke QA covered launch, night mode, map zoom and pin selection, the Culture filter, Koreatown search, and Argentina, Korea Republic, and Senegal Matchday Passports. The AI model returned text but did not call write_report, so this report was generated from simulator evidence.`;
 
   await writeReport({
     overallStatus: criticalFailures.length > 0 ? 'failed' : 'passed',
@@ -786,7 +813,11 @@ async function collectScreenshots(screenshotLabels) {
 
   const screenshots = [];
 
-  for (const fileName of entries.filter((name) => /\.(png|jpe?g)$/i.test(name)).sort()) {
+  const imageEntries = entries.filter((name) => /\.(png|jpe?g)$/i.test(name));
+  const qaEvidenceEntries = imageEntries.filter((name) => !/-after-open\.(png|jpe?g)$/i.test(name));
+  const entriesToReport = qaEvidenceEntries.length > 0 ? qaEvidenceEntries : imageEntries;
+
+  for (const fileName of entriesToReport.sort()) {
     const absolutePath = path.join(SCREENSHOTS_DIR, fileName);
     const fileStat = await stat(absolutePath);
     const screenshot = {
