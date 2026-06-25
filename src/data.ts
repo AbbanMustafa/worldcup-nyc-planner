@@ -85,7 +85,7 @@ export const spots: Spot[] = [
     borough: 'Brooklyn',
     neighborhood: 'Brooklyn Bridge Park',
     coordinates: { latitude: 40.7027, longitude: -73.9965 },
-    countries: ['Brazil', 'Morocco', 'France', 'Senegal', 'Argentina'],
+    countries: ['Brazil', 'Morocco', 'France', 'Senegal', 'Argentina', 'Norway'],
     accent: '#00A699',
     price: 'Free and ticketed moments',
     crowd: 'Waterfront festival',
@@ -473,6 +473,44 @@ export const matchdayPassports: MatchdayPassport[] = [
         time: 'Post-match',
         title: 'Late food walkout',
         detail: 'Stay in Fort Greene for a late schnitzel or bratwurst stop and an easy G/C exit.'
+      }
+    ]
+  },
+  {
+    id: 'norway-passport',
+    country: 'Norway',
+    title: 'Norway Brooklyn Bridge Waterfront Plan',
+    fixture: 'Norway group-stage afternoon',
+    hero:
+      'Take the waterfront route to Brooklyn Bridge Park, find a screen with the Nordic crowd, then wind through Dumbo for food after the final whistle.',
+    neighborhood: 'Brooklyn Bridge Park, Brooklyn',
+    anchorSpotId: 'brooklyn-bridge',
+    watchParty: 'Brooklyn Bridge Park fan zone screen',
+    cultureStop: 'Dumbo galleries, waterfront promenade, and a Manhattan Bridge view',
+    foodPlan: 'Smoked salmon board, open-faced sandwich, late Dumbo cafe stop',
+    transitPlan: 'A/C to High St or F to York St',
+    budget: '$25-$60 before drinks',
+    color: '#EF2B2D',
+    stops: [
+      {
+        id: 'waterfront',
+        time: '2:00 PM',
+        title: 'Waterfront meetup',
+        detail: 'Meet at the Brooklyn Bridge Park entrance and walk the promenade before the fan zone fills.',
+        spotId: 'brooklyn-bridge'
+      },
+      {
+        id: 'kickoff',
+        time: '3:30 PM',
+        title: 'Fan zone kickoff',
+        detail: 'Settle in at the park screen with the Nordic crowd and the Manhattan skyline behind you.',
+        spotId: 'brooklyn-bridge'
+      },
+      {
+        id: 'dumbo',
+        time: 'Post-match',
+        title: 'Dumbo walkout',
+        detail: 'Head into Dumbo for a late cafe stop or food hall finish and an easy A/C or F exit.'
       }
     ]
   }
