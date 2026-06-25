@@ -165,7 +165,7 @@ function buildPrompt() {
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
-    '- Matchday Passports are visible and Argentina, Korea Republic, and Senegal passports each open an itinerary.',
+    '- Matchday Passports are visible and Argentina, Korea Republic, Senegal, and Norway passports each open an itinerary.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -186,9 +186,11 @@ function buildPrompt() {
     '- id="passport-card-argentina-passport"',
     '- id="passport-card-korea-passport"',
     '- id="passport-card-senegal-passport"',
+    '- id="passport-card-norway-passport"',
     '- id="passport-detail-argentina-passport"',
     '- id="passport-detail-korea-passport"',
     '- id="passport-detail-senegal-passport"',
+    '- id="passport-detail-norway-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -207,7 +209,9 @@ function buildPrompt() {
     `14. Capture a Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-korea-passport.png')}.`,
     '15. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
     `16. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
-    '17. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '17. Scroll the passport carousel right, select id="passport-card-norway-passport", and verify "Brooklyn Bridge Park fan zone screen".',
+    `18. Capture a Norway passport screenshot at ${path.join(SCREENSHOTS_DIR, '08-norway-passport.png')}.`,
+    '19. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -238,9 +242,11 @@ function appContextTool() {
         'id="passport-card-argentina-passport"',
         'id="passport-card-korea-passport"',
         'id="passport-card-senegal-passport"',
+        'id="passport-card-norway-passport"',
         'id="passport-detail-argentina-passport"',
         'id="passport-detail-korea-passport"',
-        'id="passport-detail-senegal-passport"'
+        'id="passport-detail-senegal-passport"',
+        'id="passport-detail-norway-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -258,7 +264,9 @@ function appContextTool() {
         'Korea Republic Night Plan',
         'Koreatown room with match audio',
         'Senegal Harlem Walk',
-        'Harlem screen near the restaurant crawl'
+        'Harlem screen near the restaurant crawl',
+        'Norway Brooklyn Bridge Waterfront Plan',
+        'Brooklyn Bridge Park fan zone screen'
       ],
       deterministicChecks: qaChecks,
       launchAttempts
@@ -552,6 +560,34 @@ async function runDeterministicSmoke() {
   await recordQaCheck({
     name: 'Senegal passport screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Norway',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Norway passport card visible',
+    args: ['wait', 'text', 'Norway Brooklyn Bridge Waterfront Plan', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport selectable',
+    args: ['press', 'id="passport-card-norway-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-norway-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport watch party visible',
+    args: ['wait', 'text', 'Brooklyn Bridge Park fan zone screen', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '08-norway-passport.png')]
   });
 }
 
