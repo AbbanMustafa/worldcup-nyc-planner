@@ -165,7 +165,7 @@ function buildPrompt() {
     '- The Culture filter can be selected and shows culture-first route content.',
     '- Searching for Koreatown surfaces "Koreatown Red Devils Stop".',
     '- Country chips include flag emojis or equivalent flag glyphs next to country names.',
-    '- Matchday Passports are visible and Argentina, Korea Republic, and Senegal passports each open an itinerary.',
+    '- Matchday Passports are visible and Argentina, Korea Republic, France, Senegal, Germany, and Norway passports each open an itinerary.',
     '',
     'Stable selectors you may use:',
     '- id="worldcup-screen"',
@@ -185,10 +185,16 @@ function buildPrompt() {
     '- id="matchday-passports"',
     '- id="passport-card-argentina-passport"',
     '- id="passport-card-korea-passport"',
+    '- id="passport-card-france-passport"',
     '- id="passport-card-senegal-passport"',
+    '- id="passport-card-germany-passport"',
+    '- id="passport-card-norway-passport"',
     '- id="passport-detail-argentina-passport"',
     '- id="passport-detail-korea-passport"',
+    '- id="passport-detail-france-passport"',
     '- id="passport-detail-senegal-passport"',
+    '- id="passport-detail-germany-passport"',
+    '- id="passport-detail-norway-passport"',
     '',
     'Suggested flow:',
     `1. Call app_context and read the deterministic smoke evidence plus app-specific test notes.`,
@@ -203,11 +209,17 @@ function buildPrompt() {
     `10. Capture a search screenshot at ${path.join(SCREENSHOTS_DIR, '04-search-koreatown.png')}.`,
     '11. Scroll down to Matchday Passports; select id="passport-card-argentina-passport" and verify "Queens football bar near Roosevelt Av".',
     `12. Capture an Argentina passport screenshot at ${path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')}.`,
-    '13. Select id="passport-card-korea-passport" and verify "Koreatown room with match audio".',
+    '13. Scroll the passport carousel right, select id="passport-card-korea-passport", and verify "Koreatown room with match audio".',
     `14. Capture a Korea Republic passport screenshot at ${path.join(SCREENSHOTS_DIR, '06-korea-passport.png')}.`,
-    '15. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
-    `16. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
-    '17. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
+    '15. Scroll the passport carousel right, select id="passport-card-france-passport", and verify "Rockefeller broadcast plaza screen".',
+    `16. Capture a France passport screenshot at ${path.join(SCREENSHOTS_DIR, '06b-france-passport.png')}.`,
+    '17. Scroll the passport carousel right, select id="passport-card-senegal-passport", and verify "Harlem screen near the restaurant crawl".',
+    `18. Capture a Senegal passport screenshot at ${path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')}.`,
+    '19. Scroll the passport carousel right, select id="passport-card-germany-passport", and verify "Fort Greene pub showing Germany with match audio".',
+    `20. Capture a Germany passport screenshot at ${path.join(SCREENSHOTS_DIR, '08-germany-passport.png')}.`,
+    '21. Scroll the passport carousel right, select id="passport-card-norway-passport", and verify "Brooklyn Bridge Park fan zone screen".',
+    `22. Capture a Norway passport screenshot at ${path.join(SCREENSHOTS_DIR, '09-norway-passport.png')}.`,
+    '23. Call write_report with a concise status, evidence, issues, next steps, and screenshot labels.',
     '',
     'Use only the provided tools. Do not invent results. If the map is blank, report failed.'
   ].join('\n');
@@ -237,10 +249,16 @@ function appContextTool() {
         'id="matchday-passports"',
         'id="passport-card-argentina-passport"',
         'id="passport-card-korea-passport"',
+        'id="passport-card-france-passport"',
         'id="passport-card-senegal-passport"',
+        'id="passport-card-germany-passport"',
+        'id="passport-card-norway-passport"',
         'id="passport-detail-argentina-passport"',
         'id="passport-detail-korea-passport"',
-        'id="passport-detail-senegal-passport"'
+        'id="passport-detail-france-passport"',
+        'id="passport-detail-senegal-passport"',
+        'id="passport-detail-germany-passport"',
+        'id="passport-detail-norway-passport"'
       ],
       expectedText: [
         'World Cup stays local.',
@@ -257,8 +275,14 @@ function appContextTool() {
         'Queens football bar near Roosevelt Av',
         'Korea Republic Night Plan',
         'Koreatown room with match audio',
+        'France Midtown Bistro Plan',
+        'Rockefeller broadcast plaza screen',
         'Senegal Harlem Walk',
-        'Harlem screen near the restaurant crawl'
+        'Harlem screen near the restaurant crawl',
+        'Germany Brooklyn Bierhall Plan',
+        'Fort Greene pub showing Germany with match audio',
+        'Norway Brooklyn Bridge Waterfront Plan',
+        'Brooklyn Bridge Park fan zone screen'
       ],
       deterministicChecks: qaChecks,
       launchAttempts
@@ -507,6 +531,10 @@ async function runDeterministicSmoke() {
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '05-argentina-passport.png')]
   });
   await recordQaCheck({
+    name: 'Passport carousel scrolled to Korea Republic',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
     name: 'Korea Republic passport selectable',
     args: ['press', 'id="passport-card-korea-passport"'],
     critical: true
@@ -524,6 +552,34 @@ async function runDeterministicSmoke() {
   await recordQaCheck({
     name: 'Korea Republic passport screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '06-korea-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to France',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'France passport card visible',
+    args: ['wait', 'text', 'France Midtown Bistro Plan', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'France passport selectable',
+    args: ['press', 'id="passport-card-france-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'France passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-france-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'France passport watch party visible',
+    args: ['wait', 'text', 'Rockefeller broadcast plaza screen', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'France passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '06b-france-passport.png')]
   });
   await recordQaCheck({
     name: 'Passport carousel scrolled to Senegal',
@@ -552,6 +608,62 @@ async function runDeterministicSmoke() {
   await recordQaCheck({
     name: 'Senegal passport screenshot captured',
     args: ['screenshot', path.join(SCREENSHOTS_DIR, '07-senegal-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Germany',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Germany passport card visible',
+    args: ['wait', 'text', 'Germany Brooklyn Bierhall Plan', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport selectable',
+    args: ['press', 'id="passport-card-germany-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-germany-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport watch party visible',
+    args: ['wait', 'text', 'Fort Greene pub showing Germany with match audio', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Germany passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '08-germany-passport.png')]
+  });
+  await recordQaCheck({
+    name: 'Passport carousel scrolled to Norway',
+    args: ['scroll', 'right', '0.9']
+  });
+  await recordQaCheck({
+    name: 'Norway passport card visible',
+    args: ['wait', 'text', 'Norway Brooklyn Bridge Waterfront Plan', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport selectable',
+    args: ['press', 'id="passport-card-norway-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport detail visible',
+    args: ['is', 'visible', 'id="passport-detail-norway-passport"'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport watch party visible',
+    args: ['wait', 'text', 'Brooklyn Bridge Park fan zone screen', '3000'],
+    critical: true
+  });
+  await recordQaCheck({
+    name: 'Norway passport screenshot captured',
+    args: ['screenshot', path.join(SCREENSHOTS_DIR, '09-norway-passport.png')]
   });
 }
 
@@ -784,9 +896,15 @@ async function collectScreenshots(screenshotLabels) {
     return [];
   }
 
+  const imageFileNames = entries.filter((name) => /\.(png|jpe?g)$/i.test(name)).sort();
+  const hasQaEvidenceScreenshots = imageFileNames.some((fileName) => !isLaunchAttemptScreenshot(fileName));
   const screenshots = [];
 
-  for (const fileName of entries.filter((name) => /\.(png|jpe?g)$/i.test(name)).sort()) {
+  for (const fileName of imageFileNames) {
+    if (hasQaEvidenceScreenshots && isLaunchAttemptScreenshot(fileName)) {
+      continue;
+    }
+
     const absolutePath = path.join(SCREENSHOTS_DIR, fileName);
     const fileStat = await stat(absolutePath);
     const screenshot = {
@@ -801,6 +919,10 @@ async function collectScreenshots(screenshotLabels) {
   }
 
   return screenshots;
+}
+
+function isLaunchAttemptScreenshot(fileName) {
+  return /^\d+-after-open\.(png|jpe?g)$/i.test(fileName);
 }
 
 async function collectRecordings() {

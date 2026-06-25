@@ -85,7 +85,7 @@ export const spots: Spot[] = [
     borough: 'Brooklyn',
     neighborhood: 'Brooklyn Bridge Park',
     coordinates: { latitude: 40.7027, longitude: -73.9965 },
-    countries: ['Brazil', 'Morocco', 'France', 'Senegal', 'Argentina'],
+    countries: ['Brazil', 'Morocco', 'France', 'Senegal', 'Argentina', 'Norway'],
     accent: '#00A699',
     price: 'Free and ticketed moments',
     crowd: 'Waterfront festival',
@@ -104,7 +104,7 @@ export const spots: Spot[] = [
     borough: 'Manhattan',
     neighborhood: 'Rockefeller Center',
     coordinates: { latitude: 40.7587, longitude: -73.9787 },
-    countries: ['Mexico', 'Argentina', 'Colombia', 'Uruguay', 'Spain'],
+    countries: ['Mexico', 'Argentina', 'Colombia', 'Uruguay', 'Spain', 'France'],
     accent: '#FC642D',
     price: 'Free plaza events',
     crowd: 'Broadcast plaza',
@@ -275,7 +275,7 @@ export const spots: Spot[] = [
     borough: 'Brooklyn',
     neighborhood: 'Fort Greene',
     coordinates: { latitude: 40.6895, longitude: -73.9724 },
-    countries: ['England', 'Ghana', 'Croatia', 'France'],
+    countries: ['England', 'Ghana', 'Croatia', 'France', 'Germany'],
     accent: '#111827',
     price: 'Bar minimums vary',
     crowd: 'Pub energy',
@@ -365,6 +365,44 @@ export const matchdayPassports: MatchdayPassport[] = [
     ]
   },
   {
+    id: 'france-passport',
+    country: 'France',
+    title: 'France Midtown Bistro Plan',
+    fixture: 'France group-stage night',
+    hero:
+      'Anchor the night around an early Midtown bistro dinner, then cross to the Rockefeller broadcast plaza for kickoff with les Bleus fans.',
+    neighborhood: 'Rockefeller Center, Manhattan',
+    anchorSpotId: 'rockefeller',
+    watchParty: 'Rockefeller broadcast plaza screen',
+    cultureStop: 'Midtown French bistros, patisseries, and a Bryant Park stroll',
+    foodPlan: 'Steak frites, baguette sandwich, late crepe stop',
+    transitPlan: 'B/D/F/M to 47-50 Sts-Rockefeller Ctr',
+    budget: '$35-$75 before drinks',
+    color: '#0055A4',
+    stops: [
+      {
+        id: 'bistro',
+        time: '5:00 PM',
+        title: 'Bistro dinner',
+        detail: 'Book an early Midtown bistro table for steak frites before the plaza fills up.',
+        spotId: 'rockefeller'
+      },
+      {
+        id: 'plaza',
+        time: '6:30 PM',
+        title: 'Plaza kickoff',
+        detail: 'Walk to the Rockefeller broadcast plaza and stake out a screen with the French crowd.',
+        spotId: 'rockefeller'
+      },
+      {
+        id: 'dessert',
+        time: 'Post-match',
+        title: 'Patisserie walkout',
+        detail: 'Close with a crepe or patisserie stop and an easy B/D/F/M exit.'
+      }
+    ]
+  },
+  {
     id: 'senegal-passport',
     country: 'Senegal',
     title: 'Senegal Harlem Walk',
@@ -397,6 +435,82 @@ export const matchdayPassports: MatchdayPassport[] = [
         time: 'After match',
         title: 'Harlem walkout',
         detail: 'Keep the post-match route close to 125th for trains and backup food.'
+      }
+    ]
+  },
+  {
+    id: 'germany-passport',
+    country: 'Germany',
+    title: 'Germany Brooklyn Bierhall Plan',
+    fixture: 'Germany group-stage night',
+    hero:
+      'Warm up at a German bierhall over pretzels and a stein, then cross to a Fort Greene pub for kickoff with the Die Mannschaft crowd.',
+    neighborhood: 'Fort Greene, Brooklyn',
+    anchorSpotId: 'fort-greene',
+    watchParty: 'Fort Greene pub showing Germany with match audio',
+    cultureStop: 'Brooklyn bierhalls, pretzel counters, and a Fort Greene Park stroll',
+    foodPlan: 'Bratwurst, soft pretzel, late schnitzel stop',
+    transitPlan: 'G to Fulton or C to Lafayette Av',
+    budget: '$30-$65 before drinks',
+    color: '#DD0000',
+    stops: [
+      {
+        id: 'bierhall',
+        time: '4:30 PM',
+        title: 'Bierhall warmup',
+        detail: 'Start at a German bierhall for pretzels and a stein before the pub fills up.',
+        spotId: 'fort-greene'
+      },
+      {
+        id: 'kickoff',
+        time: '6:00 PM',
+        title: 'Pub kickoff',
+        detail: 'Claim a table at a Fort Greene pub showing Germany with match audio and a flag-heavy crowd.',
+        spotId: 'fort-greene'
+      },
+      {
+        id: 'late',
+        time: 'Post-match',
+        title: 'Late food walkout',
+        detail: 'Stay in Fort Greene for a late schnitzel or bratwurst stop and an easy G/C exit.'
+      }
+    ]
+  },
+  {
+    id: 'norway-passport',
+    country: 'Norway',
+    title: 'Norway Brooklyn Bridge Waterfront Plan',
+    fixture: 'Norway group-stage afternoon',
+    hero:
+      'Take the waterfront route to Brooklyn Bridge Park, find a screen with the Nordic crowd, then wind through Dumbo for food after the final whistle.',
+    neighborhood: 'Brooklyn Bridge Park, Brooklyn',
+    anchorSpotId: 'brooklyn-bridge',
+    watchParty: 'Brooklyn Bridge Park fan zone screen',
+    cultureStop: 'Dumbo galleries, waterfront promenade, and a Manhattan Bridge view',
+    foodPlan: 'Smoked salmon board, open-faced sandwich, late Dumbo cafe stop',
+    transitPlan: 'A/C to High St or F to York St',
+    budget: '$25-$60 before drinks',
+    color: '#EF2B2D',
+    stops: [
+      {
+        id: 'waterfront',
+        time: '2:00 PM',
+        title: 'Waterfront meetup',
+        detail: 'Meet at the Brooklyn Bridge Park entrance and walk the promenade before the fan zone fills.',
+        spotId: 'brooklyn-bridge'
+      },
+      {
+        id: 'kickoff',
+        time: '3:30 PM',
+        title: 'Fan zone kickoff',
+        detail: 'Settle in at the park screen with the Nordic crowd and the Manhattan skyline behind you.',
+        spotId: 'brooklyn-bridge'
+      },
+      {
+        id: 'dumbo',
+        time: 'Post-match',
+        title: 'Dumbo walkout',
+        detail: 'Head into Dumbo for a late cafe stop or food hall finish and an easy A/C or F exit.'
       }
     ]
   }
